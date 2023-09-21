@@ -31,40 +31,25 @@ namespace MobileExpress
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMobileExpress));
-            this.printDialogCustomerOneInvoice = new System.Windows.Forms.PrintDialog();
-            this.printPreviewDialogCustomerOneInvoice = new System.Windows.Forms.PrintPreviewDialog();
-            this.printDocumentCustomerOneInvoice = new System.Drawing.Printing.PrintDocument();
             this.stockTabPage = new System.Windows.Forms.TabPage();
+            this.buttonStockAdd = new System.Windows.Forms.Button();
             this.label46 = new System.Windows.Forms.Label();
             this.textBoxStockSearch = new System.Windows.Forms.TextBox();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
-            this.label23 = new System.Windows.Forms.Label();
-            this.label31 = new System.Windows.Forms.Label();
-            this.buttonStockAddArticle = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
-            this.numericUpDownStockNewQuantity = new System.Windows.Forms.NumericUpDown();
-            this.numericUpDownStockNewPrice = new System.Windows.Forms.NumericUpDown();
-            this.label30 = new System.Windows.Forms.Label();
-            this.label22 = new System.Windows.Forms.Label();
-            this.textBoxStockNewName = new System.Windows.Forms.TextBox();
-            this.textBoxStockNewDescription = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.comboBoxStockMarque = new System.Windows.Forms.ComboBox();
-            this.comboBoxStockModele = new System.Windows.Forms.ComboBox();
             this.dataGridViewStock = new System.Windows.Forms.DataGridView();
             this.customerRelationTabPage = new System.Windows.Forms.TabPage();
             this.dataGridViewCustomerRelationAll = new System.Windows.Forms.DataGridView();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.label35 = new System.Windows.Forms.Label();
+            this.textBoxCustomerRelationEmailAddress = new System.Windows.Forms.TextBox();
+            this.textBoxCustomerRelationPhone = new System.Windows.Forms.TextBox();
             this.label34 = new System.Windows.Forms.Label();
+            this.textBoxCustomerRelationFirstName = new System.Windows.Forms.TextBox();
+            this.textBoxCustomerRelationLastName = new System.Windows.Forms.TextBox();
             this.label33 = new System.Windows.Forms.Label();
             this.label32 = new System.Windows.Forms.Label();
-            this.textBoxCustomerRelationLastName = new System.Windows.Forms.TextBox();
-            this.textBoxCustomerRelationPhone = new System.Windows.Forms.TextBox();
-            this.textBoxCustomerRelationFirstName = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.comboBoxCustomerRelationSexe = new System.Windows.Forms.ComboBox();
             this.buttonCustomerRelationSaveCustomerData = new System.Windows.Forms.Button();
             this.tableLayoutPanel7 = new System.Windows.Forms.TableLayoutPanel();
             this.textBoxCustomerSearchAll = new System.Windows.Forms.TextBox();
@@ -76,10 +61,10 @@ namespace MobileExpress
             this.label43 = new System.Windows.Forms.Label();
             this.buttonTakeOverSearch = new System.Windows.Forms.Button();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
-            this.buttonTakeOverGenerateReceipt = new System.Windows.Forms.Button();
-            this.buttonTakeOverGenerateInvoice = new System.Windows.Forms.Button();
-            this.buttonTakeOverManageGarantie = new System.Windows.Forms.Button();
+            this.buttonTakeOverSave = new System.Windows.Forms.Button();
             this.buttonTakeOverManageRemise = new System.Windows.Forms.Button();
+            this.buttonTakeOverManageGarantie = new System.Windows.Forms.Button();
+            this.buttonTakeOverScanner = new System.Windows.Forms.Button();
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.label45 = new System.Windows.Forms.Label();
             this.textBoxTakeOverAccompte = new System.Windows.Forms.TextBox();
@@ -92,13 +77,13 @@ namespace MobileExpress
             this.label48 = new System.Windows.Forms.Label();
             this.label18 = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
-            this.comboBoxTakeOverLastname = new System.Windows.Forms.ComboBox();
             this.tableLayoutPanel8 = new System.Windows.Forms.TableLayoutPanel();
             this.buttonAddCustomer = new System.Windows.Forms.Button();
             this.buttonUpdateCustomer = new System.Windows.Forms.Button();
             this.checkBoxEspece = new System.Windows.Forms.CheckBox();
             this.checkBoxCb = new System.Windows.Forms.CheckBox();
             this.checkBoxVirement = new System.Windows.Forms.CheckBox();
+            this.comboBoxTakeOverCustomer = new System.Windows.Forms.ComboBox();
             this.tabControlTakeOver = new System.Windows.Forms.TabControl();
             this.tabPageTakeOverRepair = new System.Windows.Forms.TabPage();
             this.dataGridViewTakeOverRepair = new System.Windows.Forms.DataGridView();
@@ -107,15 +92,7 @@ namespace MobileExpress
             this.tabPageTakeOverAchat = new System.Windows.Forms.TabPage();
             this.dataGridViewTakeOverAchat = new System.Windows.Forms.DataGridView();
             this.tabControlAll = new System.Windows.Forms.TabControl();
-            this.textBoxCustomerRelationEmailAddress = new System.Windows.Forms.TextBox();
-            this.label35 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.comboBoxCustomerRelationSexe = new System.Windows.Forms.ComboBox();
             this.stockTabPage.SuspendLayout();
-            this.groupBox1.SuspendLayout();
-            this.tableLayoutPanel5.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownStockNewQuantity)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownStockNewPrice)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewStock)).BeginInit();
             this.customerRelationTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewCustomerRelationAll)).BeginInit();
@@ -137,32 +114,30 @@ namespace MobileExpress
             this.tabControlAll.SuspendLayout();
             this.SuspendLayout();
             // 
-            // printDialogCustomerOneInvoice
-            // 
-            this.printDialogCustomerOneInvoice.UseEXDialog = true;
-            // 
-            // printPreviewDialogCustomerOneInvoice
-            // 
-            this.printPreviewDialogCustomerOneInvoice.AutoScrollMargin = new System.Drawing.Size(0, 0);
-            this.printPreviewDialogCustomerOneInvoice.AutoScrollMinSize = new System.Drawing.Size(0, 0);
-            this.printPreviewDialogCustomerOneInvoice.ClientSize = new System.Drawing.Size(400, 300);
-            this.printPreviewDialogCustomerOneInvoice.Enabled = true;
-            this.printPreviewDialogCustomerOneInvoice.Icon = ((System.Drawing.Icon)(resources.GetObject("printPreviewDialogCustomerOneInvoice.Icon")));
-            this.printPreviewDialogCustomerOneInvoice.Name = "printPreviewDialogCustomerOneInvoice";
-            this.printPreviewDialogCustomerOneInvoice.Visible = false;
-            // 
             // stockTabPage
             // 
+            this.stockTabPage.Controls.Add(this.buttonStockAdd);
             this.stockTabPage.Controls.Add(this.label46);
             this.stockTabPage.Controls.Add(this.textBoxStockSearch);
-            this.stockTabPage.Controls.Add(this.groupBox1);
             this.stockTabPage.Controls.Add(this.dataGridViewStock);
             this.stockTabPage.Location = new System.Drawing.Point(4, 34);
             this.stockTabPage.Name = "stockTabPage";
-            this.stockTabPage.Size = new System.Drawing.Size(1299, 546);
+            this.stockTabPage.Size = new System.Drawing.Size(1348, 661);
             this.stockTabPage.TabIndex = 3;
             this.stockTabPage.Text = "Stock";
             this.stockTabPage.UseVisualStyleBackColor = true;
+            // 
+            // buttonStockAdd
+            // 
+            this.buttonStockAdd.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonStockAdd.Location = new System.Drawing.Point(3, 587);
+            this.buttonStockAdd.Name = "buttonStockAdd";
+            this.buttonStockAdd.Size = new System.Drawing.Size(1342, 71);
+            this.buttonStockAdd.TabIndex = 37;
+            this.buttonStockAdd.Text = "Ajouter un article";
+            this.buttonStockAdd.UseVisualStyleBackColor = true;
+            this.buttonStockAdd.Click += new System.EventHandler(this.buttonStockAdd_Click);
             // 
             // label46
             // 
@@ -176,192 +151,11 @@ namespace MobileExpress
             // 
             // textBoxStockSearch
             // 
-            this.textBoxStockSearch.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.textBoxStockSearch.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textBoxStockSearch.Location = new System.Drawing.Point(283, 3);
             this.textBoxStockSearch.Name = "textBoxStockSearch";
-            this.textBoxStockSearch.Size = new System.Drawing.Size(991, 29);
+            this.textBoxStockSearch.Size = new System.Drawing.Size(973, 29);
             this.textBoxStockSearch.TabIndex = 35;
-            // 
-            // groupBox1
-            // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.tableLayoutPanel5);
-            this.groupBox1.Location = new System.Drawing.Point(3, 412);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(1268, 145);
-            this.groupBox1.TabIndex = 2;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Ajouter un article";
-            // 
-            // tableLayoutPanel5
-            // 
-            this.tableLayoutPanel5.ColumnCount = 7;
-            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 417F));
-            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 94F));
-            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 310F));
-            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 105F));
-            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 125F));
-            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 115F));
-            this.tableLayoutPanel5.Controls.Add(this.label23, 0, 0);
-            this.tableLayoutPanel5.Controls.Add(this.label31, 0, 1);
-            this.tableLayoutPanel5.Controls.Add(this.buttonStockAddArticle, 6, 0);
-            this.tableLayoutPanel5.Controls.Add(this.button1, 6, 1);
-            this.tableLayoutPanel5.Controls.Add(this.numericUpDownStockNewQuantity, 5, 0);
-            this.tableLayoutPanel5.Controls.Add(this.numericUpDownStockNewPrice, 5, 1);
-            this.tableLayoutPanel5.Controls.Add(this.label30, 4, 0);
-            this.tableLayoutPanel5.Controls.Add(this.label22, 4, 1);
-            this.tableLayoutPanel5.Controls.Add(this.textBoxStockNewName, 1, 0);
-            this.tableLayoutPanel5.Controls.Add(this.textBoxStockNewDescription, 1, 1);
-            this.tableLayoutPanel5.Controls.Add(this.label1, 2, 0);
-            this.tableLayoutPanel5.Controls.Add(this.label2, 2, 1);
-            this.tableLayoutPanel5.Controls.Add(this.comboBoxStockMarque, 3, 0);
-            this.tableLayoutPanel5.Controls.Add(this.comboBoxStockModele, 3, 1);
-            this.tableLayoutPanel5.Location = new System.Drawing.Point(4, 29);
-            this.tableLayoutPanel5.Name = "tableLayoutPanel5";
-            this.tableLayoutPanel5.RowCount = 2;
-            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel5.Size = new System.Drawing.Size(1258, 110);
-            this.tableLayoutPanel5.TabIndex = 68;
-            // 
-            // label23
-            // 
-            this.label23.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.label23.AutoSize = true;
-            this.label23.Location = new System.Drawing.Point(3, 0);
-            this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(86, 55);
-            this.label23.TabIndex = 8;
-            this.label23.Text = "Nom";
-            // 
-            // label31
-            // 
-            this.label31.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.label31.AutoSize = true;
-            this.label31.Location = new System.Drawing.Point(3, 55);
-            this.label31.Name = "label31";
-            this.label31.Size = new System.Drawing.Size(86, 55);
-            this.label31.TabIndex = 65;
-            this.label31.Text = "Description";
-            // 
-            // buttonStockAddArticle
-            // 
-            this.buttonStockAddArticle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonStockAddArticle.Location = new System.Drawing.Point(1146, 5);
-            this.buttonStockAddArticle.Name = "buttonStockAddArticle";
-            this.buttonStockAddArticle.Size = new System.Drawing.Size(109, 47);
-            this.buttonStockAddArticle.TabIndex = 1;
-            this.buttonStockAddArticle.Text = "Ajouter";
-            this.buttonStockAddArticle.UseVisualStyleBackColor = true;
-            this.buttonStockAddArticle.Click += new System.EventHandler(this.buttonStockAddArticle_Click);
-            // 
-            // button1
-            // 
-            this.button1.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.button1.Location = new System.Drawing.Point(1146, 59);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(109, 47);
-            this.button1.TabIndex = 12;
-            this.button1.Text = "Scanner";
-            this.button1.UseVisualStyleBackColor = true;
-            // 
-            // numericUpDownStockNewQuantity
-            // 
-            this.numericUpDownStockNewQuantity.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.numericUpDownStockNewQuantity.Location = new System.Drawing.Point(1024, 12);
-            this.numericUpDownStockNewQuantity.Name = "numericUpDownStockNewQuantity";
-            this.numericUpDownStockNewQuantity.Size = new System.Drawing.Size(116, 30);
-            this.numericUpDownStockNewQuantity.TabIndex = 63;
-            // 
-            // numericUpDownStockNewPrice
-            // 
-            this.numericUpDownStockNewPrice.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.numericUpDownStockNewPrice.Location = new System.Drawing.Point(1024, 67);
-            this.numericUpDownStockNewPrice.Name = "numericUpDownStockNewPrice";
-            this.numericUpDownStockNewPrice.Size = new System.Drawing.Size(116, 30);
-            this.numericUpDownStockNewPrice.TabIndex = 67;
-            // 
-            // label30
-            // 
-            this.label30.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.label30.AutoSize = true;
-            this.label30.Location = new System.Drawing.Point(921, 15);
-            this.label30.Name = "label30";
-            this.label30.Size = new System.Drawing.Size(94, 25);
-            this.label30.TabIndex = 64;
-            this.label30.Text = "Quantité";
-            // 
-            // label22
-            // 
-            this.label22.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(966, 70);
-            this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(49, 25);
-            this.label22.TabIndex = 10;
-            this.label22.Text = "Prix";
-            // 
-            // textBoxStockNewName
-            // 
-            this.textBoxStockNewName.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxStockNewName.Location = new System.Drawing.Point(95, 3);
-            this.textBoxStockNewName.Name = "textBoxStockNewName";
-            this.textBoxStockNewName.Size = new System.Drawing.Size(411, 30);
-            this.textBoxStockNewName.TabIndex = 9;
-            // 
-            // textBoxStockNewDescription
-            // 
-            this.textBoxStockNewDescription.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxStockNewDescription.Location = new System.Drawing.Point(95, 58);
-            this.textBoxStockNewDescription.Name = "textBoxStockNewDescription";
-            this.textBoxStockNewDescription.Size = new System.Drawing.Size(411, 30);
-            this.textBoxStockNewDescription.TabIndex = 66;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(512, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(85, 25);
-            this.label1.TabIndex = 70;
-            this.label1.Text = "Marque";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(512, 55);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(83, 25);
-            this.label2.TabIndex = 71;
-            this.label2.Text = "Modèle";
-            // 
-            // comboBoxStockMarque
-            // 
-            this.comboBoxStockMarque.FormattingEnabled = true;
-            this.comboBoxStockMarque.Location = new System.Drawing.Point(606, 3);
-            this.comboBoxStockMarque.Name = "comboBoxStockMarque";
-            this.comboBoxStockMarque.Size = new System.Drawing.Size(304, 33);
-            this.comboBoxStockMarque.TabIndex = 72;
-            // 
-            // comboBoxStockModele
-            // 
-            this.comboBoxStockModele.FormattingEnabled = true;
-            this.comboBoxStockModele.Location = new System.Drawing.Point(606, 58);
-            this.comboBoxStockModele.Name = "comboBoxStockModele";
-            this.comboBoxStockModele.Size = new System.Drawing.Size(304, 33);
-            this.comboBoxStockModele.TabIndex = 73;
             // 
             // dataGridViewStock
             // 
@@ -373,7 +167,7 @@ namespace MobileExpress
             this.dataGridViewStock.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dataGridViewStock.Location = new System.Drawing.Point(3, 38);
             this.dataGridViewStock.Name = "dataGridViewStock";
-            this.dataGridViewStock.Size = new System.Drawing.Size(1271, 368);
+            this.dataGridViewStock.Size = new System.Drawing.Size(1342, 543);
             this.dataGridViewStock.TabIndex = 0;
             // 
             // customerRelationTabPage
@@ -383,7 +177,7 @@ namespace MobileExpress
             this.customerRelationTabPage.Controls.Add(this.tableLayoutPanel7);
             this.customerRelationTabPage.Location = new System.Drawing.Point(4, 34);
             this.customerRelationTabPage.Name = "customerRelationTabPage";
-            this.customerRelationTabPage.Size = new System.Drawing.Size(1279, 638);
+            this.customerRelationTabPage.Size = new System.Drawing.Size(1348, 661);
             this.customerRelationTabPage.TabIndex = 2;
             this.customerRelationTabPage.Text = "Relation Client";
             this.customerRelationTabPage.UseVisualStyleBackColor = true;
@@ -443,6 +237,35 @@ namespace MobileExpress
             this.tableLayoutPanel2.Size = new System.Drawing.Size(431, 180);
             this.tableLayoutPanel2.TabIndex = 34;
             // 
+            // label35
+            // 
+            this.label35.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.label35.AutoSize = true;
+            this.label35.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label35.Location = new System.Drawing.Point(55, 150);
+            this.label35.Name = "label35";
+            this.label35.Size = new System.Drawing.Size(119, 24);
+            this.label35.TabIndex = 9;
+            this.label35.Text = "Adresse mail";
+            // 
+            // textBoxCustomerRelationEmailAddress
+            // 
+            this.textBoxCustomerRelationEmailAddress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxCustomerRelationEmailAddress.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxCustomerRelationEmailAddress.Location = new System.Drawing.Point(180, 147);
+            this.textBoxCustomerRelationEmailAddress.Name = "textBoxCustomerRelationEmailAddress";
+            this.textBoxCustomerRelationEmailAddress.Size = new System.Drawing.Size(248, 29);
+            this.textBoxCustomerRelationEmailAddress.TabIndex = 10;
+            // 
+            // textBoxCustomerRelationPhone
+            // 
+            this.textBoxCustomerRelationPhone.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxCustomerRelationPhone.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxCustomerRelationPhone.Location = new System.Drawing.Point(180, 112);
+            this.textBoxCustomerRelationPhone.Name = "textBoxCustomerRelationPhone";
+            this.textBoxCustomerRelationPhone.Size = new System.Drawing.Size(248, 29);
+            this.textBoxCustomerRelationPhone.TabIndex = 8;
+            // 
             // label34
             // 
             this.label34.Anchor = System.Windows.Forms.AnchorStyles.Right;
@@ -453,6 +276,24 @@ namespace MobileExpress
             this.label34.Size = new System.Drawing.Size(103, 24);
             this.label34.TabIndex = 7;
             this.label34.Text = "Téléphone";
+            // 
+            // textBoxCustomerRelationFirstName
+            // 
+            this.textBoxCustomerRelationFirstName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxCustomerRelationFirstName.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxCustomerRelationFirstName.Location = new System.Drawing.Point(180, 77);
+            this.textBoxCustomerRelationFirstName.Name = "textBoxCustomerRelationFirstName";
+            this.textBoxCustomerRelationFirstName.Size = new System.Drawing.Size(248, 29);
+            this.textBoxCustomerRelationFirstName.TabIndex = 6;
+            // 
+            // textBoxCustomerRelationLastName
+            // 
+            this.textBoxCustomerRelationLastName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxCustomerRelationLastName.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxCustomerRelationLastName.Location = new System.Drawing.Point(180, 42);
+            this.textBoxCustomerRelationLastName.Name = "textBoxCustomerRelationLastName";
+            this.textBoxCustomerRelationLastName.Size = new System.Drawing.Size(248, 29);
+            this.textBoxCustomerRelationLastName.TabIndex = 4;
             // 
             // label33
             // 
@@ -476,32 +317,24 @@ namespace MobileExpress
             this.label32.TabIndex = 3;
             this.label32.Text = "Nom";
             // 
-            // textBoxCustomerRelationLastName
+            // label3
             // 
-            this.textBoxCustomerRelationLastName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxCustomerRelationLastName.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxCustomerRelationLastName.Location = new System.Drawing.Point(180, 42);
-            this.textBoxCustomerRelationLastName.Name = "textBoxCustomerRelationLastName";
-            this.textBoxCustomerRelationLastName.Size = new System.Drawing.Size(248, 29);
-            this.textBoxCustomerRelationLastName.TabIndex = 4;
+            this.label3.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F);
+            this.label3.Location = new System.Drawing.Point(120, 7);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(54, 24);
+            this.label3.TabIndex = 11;
+            this.label3.Text = "Sexe";
             // 
-            // textBoxCustomerRelationPhone
+            // comboBoxCustomerRelationSexe
             // 
-            this.textBoxCustomerRelationPhone.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxCustomerRelationPhone.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxCustomerRelationPhone.Location = new System.Drawing.Point(180, 112);
-            this.textBoxCustomerRelationPhone.Name = "textBoxCustomerRelationPhone";
-            this.textBoxCustomerRelationPhone.Size = new System.Drawing.Size(248, 29);
-            this.textBoxCustomerRelationPhone.TabIndex = 8;
-            // 
-            // textBoxCustomerRelationFirstName
-            // 
-            this.textBoxCustomerRelationFirstName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxCustomerRelationFirstName.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxCustomerRelationFirstName.Location = new System.Drawing.Point(180, 77);
-            this.textBoxCustomerRelationFirstName.Name = "textBoxCustomerRelationFirstName";
-            this.textBoxCustomerRelationFirstName.Size = new System.Drawing.Size(248, 29);
-            this.textBoxCustomerRelationFirstName.TabIndex = 6;
+            this.comboBoxCustomerRelationSexe.FormattingEnabled = true;
+            this.comboBoxCustomerRelationSexe.Location = new System.Drawing.Point(180, 3);
+            this.comboBoxCustomerRelationSexe.Name = "comboBoxCustomerRelationSexe";
+            this.comboBoxCustomerRelationSexe.Size = new System.Drawing.Size(248, 33);
+            this.comboBoxCustomerRelationSexe.TabIndex = 12;
             // 
             // buttonCustomerRelationSaveCustomerData
             // 
@@ -560,7 +393,7 @@ namespace MobileExpress
             this.tabPageTakeOver.Location = new System.Drawing.Point(4, 34);
             this.tabPageTakeOver.Name = "tabPageTakeOver";
             this.tabPageTakeOver.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageTakeOver.Size = new System.Drawing.Size(1299, 546);
+            this.tabPageTakeOver.Size = new System.Drawing.Size(1348, 661);
             this.tabPageTakeOver.TabIndex = 5;
             this.tabPageTakeOver.Text = "Prise en charge";
             this.tabPageTakeOver.UseVisualStyleBackColor = true;
@@ -571,7 +404,7 @@ namespace MobileExpress
             this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 63.47518F));
             this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 36.52482F));
             this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 165F));
-            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 176F));
+            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 182F));
             this.tableLayoutPanel6.Controls.Add(this.takeOverNumber, 0, 0);
             this.tableLayoutPanel6.Controls.Add(this.buttonTakeOverReset, 3, 0);
             this.tableLayoutPanel6.Controls.Add(this.label43, 0, 0);
@@ -586,7 +419,7 @@ namespace MobileExpress
             // 
             // takeOverNumber
             // 
-            this.takeOverNumber.Location = new System.Drawing.Point(213, 3);
+            this.takeOverNumber.Location = new System.Drawing.Point(209, 3);
             this.takeOverNumber.Name = "takeOverNumber";
             this.takeOverNumber.Size = new System.Drawing.Size(97, 30);
             this.takeOverNumber.TabIndex = 95;
@@ -594,7 +427,7 @@ namespace MobileExpress
             // 
             // buttonTakeOverReset
             // 
-            this.buttonTakeOverReset.Location = new System.Drawing.Point(499, 3);
+            this.buttonTakeOverReset.Location = new System.Drawing.Point(493, 3);
             this.buttonTakeOverReset.Name = "buttonTakeOverReset";
             this.buttonTakeOverReset.Size = new System.Drawing.Size(147, 30);
             this.buttonTakeOverReset.TabIndex = 91;
@@ -614,7 +447,7 @@ namespace MobileExpress
             // 
             // buttonTakeOverSearch
             // 
-            this.buttonTakeOverSearch.Location = new System.Drawing.Point(334, 3);
+            this.buttonTakeOverSearch.Location = new System.Drawing.Point(328, 3);
             this.buttonTakeOverSearch.Name = "buttonTakeOverSearch";
             this.buttonTakeOverSearch.Size = new System.Drawing.Size(150, 30);
             this.buttonTakeOverSearch.TabIndex = 95;
@@ -624,76 +457,74 @@ namespace MobileExpress
             // 
             // tableLayoutPanel4
             // 
-            this.tableLayoutPanel4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel4.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.tableLayoutPanel4.AutoSize = true;
             this.tableLayoutPanel4.ColumnCount = 4;
             this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 47.78481F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 52.21519F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 339F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 294F));
-            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverGenerateReceipt, 0, 0);
-            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverGenerateInvoice, 1, 0);
-            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverManageGarantie, 2, 0);
-            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverManageRemise, 3, 0);
-            this.tableLayoutPanel4.Location = new System.Drawing.Point(6, 438);
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 322F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 323F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 318F));
+            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverSave, 0, 0);
+            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverManageRemise, 2, 0);
+            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverManageGarantie, 1, 0);
+            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverScanner, 3, 0);
+            this.tableLayoutPanel4.Location = new System.Drawing.Point(42, 556);
             this.tableLayoutPanel4.Name = "tableLayoutPanel4";
             this.tableLayoutPanel4.RowCount = 1;
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel4.Size = new System.Drawing.Size(1265, 83);
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(1281, 83);
             this.tableLayoutPanel4.TabIndex = 97;
             // 
-            // buttonTakeOverGenerateReceipt
+            // buttonTakeOverSave
             // 
-            this.buttonTakeOverGenerateReceipt.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonTakeOverGenerateReceipt.AutoSize = true;
-            this.buttonTakeOverGenerateReceipt.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonTakeOverGenerateReceipt.Location = new System.Drawing.Point(3, 12);
-            this.buttonTakeOverGenerateReceipt.Name = "buttonTakeOverGenerateReceipt";
-            this.buttonTakeOverGenerateReceipt.Size = new System.Drawing.Size(296, 58);
-            this.buttonTakeOverGenerateReceipt.TabIndex = 82;
-            this.buttonTakeOverGenerateReceipt.Text = "Générer un reçu";
-            this.buttonTakeOverGenerateReceipt.UseVisualStyleBackColor = true;
-            this.buttonTakeOverGenerateReceipt.Click += new System.EventHandler(this.buttonTakeOverSave_Click);
+            this.buttonTakeOverSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonTakeOverSave.AutoSize = true;
+            this.buttonTakeOverSave.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonTakeOverSave.Location = new System.Drawing.Point(3, 12);
+            this.buttonTakeOverSave.Name = "buttonTakeOverSave";
+            this.buttonTakeOverSave.Size = new System.Drawing.Size(312, 58);
+            this.buttonTakeOverSave.TabIndex = 82;
+            this.buttonTakeOverSave.Text = "Sauvegarder";
+            this.buttonTakeOverSave.UseVisualStyleBackColor = true;
+            this.buttonTakeOverSave.Click += new System.EventHandler(this.buttonTakeOverSave_Click);
             // 
-            // buttonTakeOverGenerateInvoice
+            // buttonTakeOverManageRemise
             // 
-            this.buttonTakeOverGenerateInvoice.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonTakeOverGenerateInvoice.AutoSize = true;
-            this.buttonTakeOverGenerateInvoice.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonTakeOverGenerateInvoice.Location = new System.Drawing.Point(305, 12);
-            this.buttonTakeOverGenerateInvoice.Name = "buttonTakeOverGenerateInvoice";
-            this.buttonTakeOverGenerateInvoice.Size = new System.Drawing.Size(324, 58);
-            this.buttonTakeOverGenerateInvoice.TabIndex = 86;
-            this.buttonTakeOverGenerateInvoice.Text = "Générer une facture";
-            this.buttonTakeOverGenerateInvoice.UseVisualStyleBackColor = true;
-            this.buttonTakeOverGenerateInvoice.Click += new System.EventHandler(this.buttonTakeOverGenerateInvoice_Click);
+            this.buttonTakeOverManageRemise.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonTakeOverManageRemise.AutoSize = true;
+            this.buttonTakeOverManageRemise.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonTakeOverManageRemise.Location = new System.Drawing.Point(643, 12);
+            this.buttonTakeOverManageRemise.Name = "buttonTakeOverManageRemise";
+            this.buttonTakeOverManageRemise.Size = new System.Drawing.Size(317, 58);
+            this.buttonTakeOverManageRemise.TabIndex = 88;
+            this.buttonTakeOverManageRemise.Text = "Gérer les remises";
+            this.buttonTakeOverManageRemise.UseVisualStyleBackColor = true;
+            this.buttonTakeOverManageRemise.Click += new System.EventHandler(this.buttonTakeOverManageRemise_Click);
             // 
             // buttonTakeOverManageGarantie
             // 
             this.buttonTakeOverManageGarantie.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonTakeOverManageGarantie.AutoSize = true;
             this.buttonTakeOverManageGarantie.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonTakeOverManageGarantie.Location = new System.Drawing.Point(635, 12);
+            this.buttonTakeOverManageGarantie.Location = new System.Drawing.Point(321, 12);
             this.buttonTakeOverManageGarantie.Name = "buttonTakeOverManageGarantie";
-            this.buttonTakeOverManageGarantie.Size = new System.Drawing.Size(333, 58);
+            this.buttonTakeOverManageGarantie.Size = new System.Drawing.Size(316, 58);
             this.buttonTakeOverManageGarantie.TabIndex = 87;
             this.buttonTakeOverManageGarantie.Text = "Gérer les garanties";
             this.buttonTakeOverManageGarantie.UseVisualStyleBackColor = true;
             this.buttonTakeOverManageGarantie.Click += new System.EventHandler(this.buttonTakeOverManageGarantie_Click);
             // 
-            // buttonTakeOverManageRemise
+            // buttonTakeOverScanner
             // 
-            this.buttonTakeOverManageRemise.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonTakeOverManageRemise.AutoSize = true;
-            this.buttonTakeOverManageRemise.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F);
-            this.buttonTakeOverManageRemise.Location = new System.Drawing.Point(974, 12);
-            this.buttonTakeOverManageRemise.Name = "buttonTakeOverManageRemise";
-            this.buttonTakeOverManageRemise.Size = new System.Drawing.Size(288, 58);
-            this.buttonTakeOverManageRemise.TabIndex = 88;
-            this.buttonTakeOverManageRemise.Text = "Gérer les remises";
-            this.buttonTakeOverManageRemise.UseVisualStyleBackColor = true;
-            this.buttonTakeOverManageRemise.Click += new System.EventHandler(this.buttonTakeOverManageRemise_Click);
+            this.buttonTakeOverScanner.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonTakeOverScanner.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonTakeOverScanner.Location = new System.Drawing.Point(966, 12);
+            this.buttonTakeOverScanner.Name = "buttonTakeOverScanner";
+            this.buttonTakeOverScanner.Size = new System.Drawing.Size(312, 58);
+            this.buttonTakeOverScanner.TabIndex = 89;
+            this.buttonTakeOverScanner.Text = "Scanner un article";
+            this.buttonTakeOverScanner.UseVisualStyleBackColor = true;
+            this.buttonTakeOverScanner.Click += new System.EventHandler(this.ButtonTakeOverScanner_Click);
             // 
             // tableLayoutPanel3
             // 
@@ -711,11 +542,11 @@ namespace MobileExpress
             this.tableLayoutPanel3.Controls.Add(this.label48, 0, 5);
             this.tableLayoutPanel3.Controls.Add(this.label18, 0, 6);
             this.tableLayoutPanel3.Controls.Add(this.label17, 0, 4);
-            this.tableLayoutPanel3.Controls.Add(this.comboBoxTakeOverLastname, 1, 1);
             this.tableLayoutPanel3.Controls.Add(this.tableLayoutPanel8, 1, 2);
             this.tableLayoutPanel3.Controls.Add(this.checkBoxEspece, 1, 8);
             this.tableLayoutPanel3.Controls.Add(this.checkBoxCb, 1, 7);
             this.tableLayoutPanel3.Controls.Add(this.checkBoxVirement, 1, 9);
+            this.tableLayoutPanel3.Controls.Add(this.comboBoxTakeOverCustomer, 1, 1);
             this.tableLayoutPanel3.Location = new System.Drawing.Point(6, 48);
             this.tableLayoutPanel3.Name = "tableLayoutPanel3";
             this.tableLayoutPanel3.RowCount = 10;
@@ -770,6 +601,7 @@ namespace MobileExpress
             // dateTimePickerTakeOverDate
             // 
             this.dateTimePickerTakeOverDate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.dateTimePickerTakeOverDate.CustomFormat = "dd/MM/yyyy HH:mm:ss";
             this.dateTimePickerTakeOverDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dateTimePickerTakeOverDate.Location = new System.Drawing.Point(181, 8);
             this.dateTimePickerTakeOverDate.Name = "dateTimePickerTakeOverDate";
@@ -851,14 +683,6 @@ namespace MobileExpress
             this.label17.TabIndex = 92;
             this.label17.Text = "Reste dû";
             // 
-            // comboBoxTakeOverLastname
-            // 
-            this.comboBoxTakeOverLastname.FormattingEnabled = true;
-            this.comboBoxTakeOverLastname.Location = new System.Drawing.Point(181, 49);
-            this.comboBoxTakeOverLastname.Name = "comboBoxTakeOverLastname";
-            this.comboBoxTakeOverLastname.Size = new System.Drawing.Size(350, 33);
-            this.comboBoxTakeOverLastname.TabIndex = 98;
-            // 
             // tableLayoutPanel8
             // 
             this.tableLayoutPanel8.ColumnCount = 2;
@@ -928,6 +752,14 @@ namespace MobileExpress
             this.checkBoxVirement.Text = "Paiement par virement";
             this.checkBoxVirement.UseVisualStyleBackColor = true;
             // 
+            // comboBoxTakeOverCustomer
+            // 
+            this.comboBoxTakeOverCustomer.FormattingEnabled = true;
+            this.comboBoxTakeOverCustomer.Location = new System.Drawing.Point(181, 49);
+            this.comboBoxTakeOverCustomer.Name = "comboBoxTakeOverCustomer";
+            this.comboBoxTakeOverCustomer.Size = new System.Drawing.Size(350, 33);
+            this.comboBoxTakeOverCustomer.TabIndex = 104;
+            // 
             // tabControlTakeOver
             // 
             this.tabControlTakeOver.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -940,7 +772,7 @@ namespace MobileExpress
             this.tabControlTakeOver.Location = new System.Drawing.Point(546, 48);
             this.tabControlTakeOver.Name = "tabControlTakeOver";
             this.tabControlTakeOver.SelectedIndex = 0;
-            this.tabControlTakeOver.Size = new System.Drawing.Size(725, 384);
+            this.tabControlTakeOver.Size = new System.Drawing.Size(812, 502);
             this.tabControlTakeOver.TabIndex = 88;
             // 
             // tabPageTakeOverRepair
@@ -950,7 +782,7 @@ namespace MobileExpress
             this.tabPageTakeOverRepair.Location = new System.Drawing.Point(4, 29);
             this.tabPageTakeOverRepair.Name = "tabPageTakeOverRepair";
             this.tabPageTakeOverRepair.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageTakeOverRepair.Size = new System.Drawing.Size(717, 351);
+            this.tabPageTakeOverRepair.Size = new System.Drawing.Size(804, 469);
             this.tabPageTakeOverRepair.TabIndex = 0;
             this.tabPageTakeOverRepair.Text = "Réparation";
             this.tabPageTakeOverRepair.UseVisualStyleBackColor = true;
@@ -964,10 +796,11 @@ namespace MobileExpress
             this.dataGridViewTakeOverRepair.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewTakeOverRepair.Location = new System.Drawing.Point(6, 6);
             this.dataGridViewTakeOverRepair.Name = "dataGridViewTakeOverRepair";
-            this.dataGridViewTakeOverRepair.Size = new System.Drawing.Size(705, 339);
+            this.dataGridViewTakeOverRepair.Size = new System.Drawing.Size(792, 457);
             this.dataGridViewTakeOverRepair.TabIndex = 0;
+            this.dataGridViewTakeOverRepair.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverRepair_CellBeginEdit);
             this.dataGridViewTakeOverRepair.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverRepair_CellClick);
-            this.dataGridViewTakeOverRepair.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverRepair_CellValidated);
+            this.dataGridViewTakeOverRepair.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverRepair_CellEndEdit);
             this.dataGridViewTakeOverRepair.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverRepair_CurrentCellDirtyStateChanged);
             this.dataGridViewTakeOverRepair.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverRepair_EditingControlShowing);
             // 
@@ -977,7 +810,7 @@ namespace MobileExpress
             this.tabPageTakeOverUnlock.Location = new System.Drawing.Point(4, 29);
             this.tabPageTakeOverUnlock.Name = "tabPageTakeOverUnlock";
             this.tabPageTakeOverUnlock.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageTakeOverUnlock.Size = new System.Drawing.Size(717, 351);
+            this.tabPageTakeOverUnlock.Size = new System.Drawing.Size(804, 469);
             this.tabPageTakeOverUnlock.TabIndex = 1;
             this.tabPageTakeOverUnlock.Text = "Déblocage";
             this.tabPageTakeOverUnlock.UseVisualStyleBackColor = true;
@@ -991,10 +824,11 @@ namespace MobileExpress
             this.dataGridViewTakeOverUnlock.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewTakeOverUnlock.Location = new System.Drawing.Point(6, 6);
             this.dataGridViewTakeOverUnlock.Name = "dataGridViewTakeOverUnlock";
-            this.dataGridViewTakeOverUnlock.Size = new System.Drawing.Size(705, 339);
+            this.dataGridViewTakeOverUnlock.Size = new System.Drawing.Size(792, 457);
             this.dataGridViewTakeOverUnlock.TabIndex = 0;
+            this.dataGridViewTakeOverUnlock.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverUnlock_CellBeginEdit);
             this.dataGridViewTakeOverUnlock.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverUnlock_CellClick);
-            this.dataGridViewTakeOverUnlock.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverUnlock_CellValidated);
+            this.dataGridViewTakeOverUnlock.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverUnlock_CellEndEdit);
             this.dataGridViewTakeOverUnlock.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverUnlock_CurrentCellDirtyStateChanged);
             this.dataGridViewTakeOverUnlock.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverUnlock_EditingControlShowing);
             // 
@@ -1004,7 +838,7 @@ namespace MobileExpress
             this.tabPageTakeOverAchat.Location = new System.Drawing.Point(4, 29);
             this.tabPageTakeOverAchat.Name = "tabPageTakeOverAchat";
             this.tabPageTakeOverAchat.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageTakeOverAchat.Size = new System.Drawing.Size(717, 351);
+            this.tabPageTakeOverAchat.Size = new System.Drawing.Size(804, 469);
             this.tabPageTakeOverAchat.TabIndex = 2;
             this.tabPageTakeOverAchat.Text = "Achat";
             this.tabPageTakeOverAchat.UseVisualStyleBackColor = true;
@@ -1018,10 +852,11 @@ namespace MobileExpress
             this.dataGridViewTakeOverAchat.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewTakeOverAchat.Location = new System.Drawing.Point(6, 6);
             this.dataGridViewTakeOverAchat.Name = "dataGridViewTakeOverAchat";
-            this.dataGridViewTakeOverAchat.Size = new System.Drawing.Size(705, 339);
+            this.dataGridViewTakeOverAchat.Size = new System.Drawing.Size(792, 457);
             this.dataGridViewTakeOverAchat.TabIndex = 0;
+            this.dataGridViewTakeOverAchat.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverAchat_CellBeginEdit);
             this.dataGridViewTakeOverAchat.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellClick);
-            this.dataGridViewTakeOverAchat.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellValidated);
+            this.dataGridViewTakeOverAchat.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellEndEdit);
             this.dataGridViewTakeOverAchat.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverAchat_CurrentCellDirtyStateChanged);
             this.dataGridViewTakeOverAchat.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverAchat_EditingControlShowing);
             // 
@@ -1037,65 +872,21 @@ namespace MobileExpress
             this.tabControlAll.Location = new System.Drawing.Point(12, 12);
             this.tabControlAll.Name = "tabControlAll";
             this.tabControlAll.SelectedIndex = 0;
-            this.tabControlAll.Size = new System.Drawing.Size(1287, 676);
+            this.tabControlAll.Size = new System.Drawing.Size(1356, 699);
             this.tabControlAll.TabIndex = 0;
-            // 
-            // textBoxCustomerRelationEmailAddress
-            // 
-            this.textBoxCustomerRelationEmailAddress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxCustomerRelationEmailAddress.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxCustomerRelationEmailAddress.Location = new System.Drawing.Point(180, 147);
-            this.textBoxCustomerRelationEmailAddress.Name = "textBoxCustomerRelationEmailAddress";
-            this.textBoxCustomerRelationEmailAddress.Size = new System.Drawing.Size(248, 29);
-            this.textBoxCustomerRelationEmailAddress.TabIndex = 10;
-            // 
-            // label35
-            // 
-            this.label35.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.label35.AutoSize = true;
-            this.label35.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label35.Location = new System.Drawing.Point(55, 150);
-            this.label35.Name = "label35";
-            this.label35.Size = new System.Drawing.Size(119, 24);
-            this.label35.TabIndex = 9;
-            this.label35.Text = "Adresse mail";
-            // 
-            // label3
-            // 
-            this.label3.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F);
-            this.label3.Location = new System.Drawing.Point(120, 7);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(54, 24);
-            this.label3.TabIndex = 11;
-            this.label3.Text = "Sexe";
-            // 
-            // comboBoxCustomerRelationSexe
-            // 
-            this.comboBoxCustomerRelationSexe.FormattingEnabled = true;
-            this.comboBoxCustomerRelationSexe.Location = new System.Drawing.Point(180, 3);
-            this.comboBoxCustomerRelationSexe.Name = "comboBoxCustomerRelationSexe";
-            this.comboBoxCustomerRelationSexe.Size = new System.Drawing.Size(248, 33);
-            this.comboBoxCustomerRelationSexe.TabIndex = 12;
             // 
             // FormMobileExpress
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
-            this.ClientSize = new System.Drawing.Size(1311, 700);
+            this.ClientSize = new System.Drawing.Size(1380, 723);
             this.Controls.Add(this.tabControlAll);
             this.Name = "FormMobileExpress";
             this.Text = "Mobile Express";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.stockTabPage.ResumeLayout(false);
             this.stockTabPage.PerformLayout();
-            this.groupBox1.ResumeLayout(false);
-            this.tableLayoutPanel5.ResumeLayout(false);
-            this.tableLayoutPanel5.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownStockNewQuantity)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownStockNewPrice)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewStock)).EndInit();
             this.customerRelationTabPage.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewCustomerRelationAll)).EndInit();
@@ -1126,23 +917,9 @@ namespace MobileExpress
         }
 
         #endregion
-        private PrintDialog printDialogCustomerOneInvoice;
-        private PrintPreviewDialog printPreviewDialogCustomerOneInvoice;
-        private System.Drawing.Printing.PrintDocument printDocumentCustomerOneInvoice;
         private TabPage stockTabPage;
         private Label label46;
         private TextBox textBoxStockSearch;
-        private GroupBox groupBox1;
-        private NumericUpDown numericUpDownStockNewPrice;
-        private TextBox textBoxStockNewDescription;
-        private Label label31;
-        private Label label30;
-        private NumericUpDown numericUpDownStockNewQuantity;
-        private Button button1;
-        private Label label22;
-        private TextBox textBoxStockNewName;
-        private Label label23;
-        private Button buttonStockAddArticle;
         private DataGridView dataGridViewStock;
         private TabPage customerRelationTabPage;
         private Label label40;
@@ -1166,8 +943,7 @@ namespace MobileExpress
         private TabControl tabControlTakeOver;
         private TabPage tabPageTakeOverRepair;
         private DataGridView dataGridViewTakeOverRepair;
-        private Button buttonTakeOverGenerateInvoice;
-        private Button buttonTakeOverGenerateReceipt;
+        private Button buttonTakeOverSave;
         private Label label18;
         private Label label27;
         private Label label43;
@@ -1182,12 +958,7 @@ namespace MobileExpress
         private TableLayoutPanel tableLayoutPanel2;
         private TableLayoutPanel tableLayoutPanel4;
         private TableLayoutPanel tableLayoutPanel3;
-        private TableLayoutPanel tableLayoutPanel5;
         private TableLayoutPanel tableLayoutPanel7;
-        private Label label1;
-        private Label label2;
-        private ComboBox comboBoxStockMarque;
-        private ComboBox comboBoxStockModele;
         private TableLayoutPanel tableLayoutPanel6;
         private Button buttonTakeOverManageGarantie;
         private TextBox takeOverNumber;
@@ -1195,7 +966,6 @@ namespace MobileExpress
         private Button buttonTakeOverSearch;
         private Button buttonAddCustomer;
         private Button buttonUpdateCustomer;
-        private ComboBox comboBoxTakeOverLastname;
         private TableLayoutPanel tableLayoutPanel8;
         private Button buttonTakeOverManageRemise;
         private CheckBox checkBoxEspece;
@@ -1205,6 +975,9 @@ namespace MobileExpress
         private TextBox textBoxCustomerRelationEmailAddress;
         private Label label3;
         private ComboBox comboBoxCustomerRelationSexe;
+        private Button buttonTakeOverScanner;
+        private Button buttonStockAdd;
+        private ComboBox comboBoxTakeOverCustomer;
     }
 }
 

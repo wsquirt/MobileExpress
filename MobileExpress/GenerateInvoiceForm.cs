@@ -192,45 +192,52 @@ namespace MobileExpress
         }
         private void buttonGenerateInvoice_Click(object sender, EventArgs e)
         {
-            foreach (DataGridViewRow line in dataGridViewGenerateInvoice.Rows)
+            try
             {
-                if (!line.IsNewRow &&
-                    (line.Cells["dataGridViewGenerateInvoiceAddItem"].Value as bool?).HasValue &&
-                    (line.Cells["dataGridViewGenerateInvoiceAddItem"].Value as bool?).Value)
+                foreach (DataGridViewRow line in dataGridViewGenerateInvoice.Rows)
                 {
-                    string type = (string)line.Cells["dataGridViewGenerateInvoiceType"].Value;
-                    RepairType repairType = null;
-                    UnlockType unlockType = null;
-                    Article article = null;
-                    if (string.Compare("Réparation", type) == 0)
+                    if (!line.IsNewRow &&
+                        (line.Cells["dataGridViewGenerateInvoiceAddItem"].Value as bool?).HasValue &&
+                        (line.Cells["dataGridViewGenerateInvoiceAddItem"].Value as bool?).Value)
                     {
-                        repairType = TakeOversDS.Find(x => x.Id == 0).RepairTypes.Find(x => string.Compare(x.Name, (string)line.Cells["dataGridViewGenerateInvoiceProduct"].Value) == 0);
-                    }
-                    else if (string.Compare("Déblocage", type) == 0)
-                    {
-                        unlockType = TakeOversDS.Find(x => x.Id == 1).UnlockTypes.Find(x => string.Compare(x.Name, (string)line.Cells["dataGridViewGenerateInvoiceProduct"].Value) == 0);
-                    }
-                    else if (string.Compare("Achat", type) == 0)
-                    {
-                        article = TakeOversDS.Find(x => x.Id == 2).Articles.Find(x => string.Compare(x.Name, (string)line.Cells["dataGridViewGenerateInvoiceProduct"].Value) == 0);
-                    }
-                    foreach (MEData mEData in MEDatas)
-                    {
-                        if (mEData.TakeOverId == (int)line.Cells["dataGridViewGenerateInvoiceTakeoverId"].Value &&
-                            ((repairType != null && mEData.RepairTypeId == repairType.Id) ||
-                            (unlockType != null && mEData.UnlockTypeId == unlockType.Id) ||
-                            (article != null && mEData.ArticleId == article.Id)))
+                        string type = (string)line.Cells["dataGridViewGenerateInvoiceType"].Value;
+                        RepairType repairType = null;
+                        UnlockType unlockType = null;
+                        Article article = null;
+                        if (string.Compare("Réparation", type) == 0)
                         {
-                            mEData.InvoiceId = InvoiceId;
-                            mEData.State = mEData.State == TakeOverState.InProgress || mEData.State == TakeOverState.Done ? TakeOverState.PickedUp : mEData.State;
+                            repairType = TakeOversDS.Find(x => x.Id == 0).RepairTypes.Find(x => string.Compare(x.Name, (string)line.Cells["dataGridViewGenerateInvoiceProduct"].Value) == 0);
+                        }
+                        else if (string.Compare("Déblocage", type) == 0)
+                        {
+                            unlockType = TakeOversDS.Find(x => x.Id == 1).UnlockTypes.Find(x => string.Compare(x.Name, (string)line.Cells["dataGridViewGenerateInvoiceProduct"].Value) == 0);
+                        }
+                        else if (string.Compare("Achat", type) == 0)
+                        {
+                            article = TakeOversDS.Find(x => x.Id == 2).Articles.Find(x => string.Compare(x.Name, (string)line.Cells["dataGridViewGenerateInvoiceProduct"].Value) == 0);
+                        }
+                        foreach (MEData mEData in MEDatas)
+                        {
+                            if (mEData.TakeOverId == (int)line.Cells["dataGridViewGenerateInvoiceTakeoverId"].Value &&
+                                ((repairType != null && mEData.RepairTypeId == repairType.Id) ||
+                                (unlockType != null && mEData.UnlockTypeId == unlockType.Id) ||
+                                (article != null && mEData.ArticleId == article.Id)))
+                            {
+                                mEData.InvoiceId = InvoiceId;
+                                mEData.State = mEData.State == TakeOverState.InProgress || mEData.State == TakeOverState.Done ? TakeOverState.PickedUp : mEData.State;
+                            }
                         }
                     }
                 }
+                // Indiquer que le formulaire doit se fermer avec un résultat valide (OK)
+                this.DialogResult = DialogResult.Yes;
+                // Fermer le formulaire
+                this.Close();
             }
-            // Indiquer que le formulaire doit se fermer avec un résultat valide (OK)
-            this.DialogResult = DialogResult.Yes;
-            // Fermer le formulaire
-            this.Close();
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+            }
         }
 
         public List<MEData> GetResult()
