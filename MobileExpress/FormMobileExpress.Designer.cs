@@ -453,7 +453,7 @@ namespace MobileExpress
             this.buttonTakeOverSearch.TabIndex = 95;
             this.buttonTakeOverSearch.Text = "Rechercher";
             this.buttonTakeOverSearch.UseVisualStyleBackColor = true;
-            this.buttonTakeOverSearch.Click += new System.EventHandler(this.buttonTakeOverSearch_Click_1);
+            this.buttonTakeOverSearch.Click += new System.EventHandler(this.buttonTakeOverSearch_Click);
             // 
             // tableLayoutPanel4
             // 
@@ -798,11 +798,6 @@ namespace MobileExpress
             this.dataGridViewTakeOverRepair.Name = "dataGridViewTakeOverRepair";
             this.dataGridViewTakeOverRepair.Size = new System.Drawing.Size(792, 457);
             this.dataGridViewTakeOverRepair.TabIndex = 0;
-            this.dataGridViewTakeOverRepair.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverRepair_CellBeginEdit);
-            this.dataGridViewTakeOverRepair.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverRepair_CellClick);
-            this.dataGridViewTakeOverRepair.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverRepair_CellEndEdit);
-            this.dataGridViewTakeOverRepair.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverRepair_CurrentCellDirtyStateChanged);
-            this.dataGridViewTakeOverRepair.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverRepair_EditingControlShowing);
             // 
             // tabPageTakeOverUnlock
             // 
@@ -826,11 +821,6 @@ namespace MobileExpress
             this.dataGridViewTakeOverUnlock.Name = "dataGridViewTakeOverUnlock";
             this.dataGridViewTakeOverUnlock.Size = new System.Drawing.Size(792, 457);
             this.dataGridViewTakeOverUnlock.TabIndex = 0;
-            this.dataGridViewTakeOverUnlock.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverUnlock_CellBeginEdit);
-            this.dataGridViewTakeOverUnlock.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverUnlock_CellClick);
-            this.dataGridViewTakeOverUnlock.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverUnlock_CellEndEdit);
-            this.dataGridViewTakeOverUnlock.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverUnlock_CurrentCellDirtyStateChanged);
-            this.dataGridViewTakeOverUnlock.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverUnlock_EditingControlShowing);
             // 
             // tabPageTakeOverAchat
             // 
@@ -854,11 +844,6 @@ namespace MobileExpress
             this.dataGridViewTakeOverAchat.Name = "dataGridViewTakeOverAchat";
             this.dataGridViewTakeOverAchat.Size = new System.Drawing.Size(792, 457);
             this.dataGridViewTakeOverAchat.TabIndex = 0;
-            this.dataGridViewTakeOverAchat.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverAchat_CellBeginEdit);
-            this.dataGridViewTakeOverAchat.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellClick);
-            this.dataGridViewTakeOverAchat.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellEndEdit);
-            this.dataGridViewTakeOverAchat.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverAchat_CurrentCellDirtyStateChanged);
-            this.dataGridViewTakeOverAchat.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverAchat_EditingControlShowing);
             // 
             // tabControlAll
             // 

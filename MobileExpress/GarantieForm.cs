@@ -66,6 +66,16 @@ namespace MobileExpress
                 ReadOnly = false,
             };
             dataGridViewGarantie.Columns.Add(textBoxMonths);
+
+            DataGridViewCheckBoxColumn checkBoxAdd = new DataGridViewCheckBoxColumn
+            {
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                HeaderText = "Sélection",
+                Name = "dataGridViewGarantieOption",
+                TrueValue = true,
+                ValueType = typeof(bool),
+            };
+            dataGridViewGarantie.Columns.Add(checkBoxAdd);
         }
         private void DataGridView_Load()
         {
@@ -96,6 +106,9 @@ namespace MobileExpress
                     DataGridViewTextBoxCell textBoxGarantieMonths = (DataGridViewTextBoxCell)dataGridViewGarantie.Rows[index].Cells["dataGridViewGarantieMonths"];
                     textBoxGarantieMonths.Value = garantie.Months;
 
+                    DataGridViewCheckBoxCell checkBoxGarantieOption = (DataGridViewCheckBoxCell)dataGridViewGarantie.Rows[index].Cells["dataGridViewGarantieOption"];
+                    checkBoxGarantieOption.Value = garantie.Option ?? false;
+
                     index++;
                 }
             }
@@ -115,16 +128,20 @@ namespace MobileExpress
                 foreach (DataGridViewRow row in dataGridViewGarantie.Rows)
                 {
                     if (!row.IsNewRow &&
-                        (row.Cells["dataGridViewGarantieMonths"].Value as int?).HasValue &&
-                        (row.Cells["dataGridViewGarantieMonths"].Value as int?).Value > 0)
+                        (row.Cells["dataGridViewGarantieId"].Value as int?).HasValue &&
+                        (row.Cells["dataGridViewGarantieId"].Value as int?).Value > 0)
                     {
                         int id = (row.Cells["dataGridViewGarantieId"].Value as int?).Value;
                         int? garantieMonths = row.Cells["dataGridViewGarantieMonths"].Value as int?;
+                        bool? garantieOption = row.Cells["dataGridViewGarantieOption"].Value as bool?;
 
-                        Garantie garantie = GarantiesTemp.FirstOrDefault(x => x.Id == id);
-                        if (garantie != null)
+                        for (int i = 0; i < GarantiesTemp.Count; i++)
                         {
-                            garantie.Months = garantieMonths;
+                            if (GarantiesTemp[i].Id == id)
+                            {
+                                GarantiesTemp[i].Months = garantieMonths;
+                                GarantiesTemp[i].Option = garantieOption;
+                            }
                         }
                     }
                 }

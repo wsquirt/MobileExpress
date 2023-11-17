@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using ComboBox = System.Windows.Forms.ComboBox;
 using TextBox = System.Windows.Forms.TextBox;
 
@@ -64,9 +65,9 @@ namespace MobileExpress
             RemisesTemp = new List<Remise>();
             dateTimePickerTakeOverDate.Format = DateTimePickerFormat.Custom;
             dateTimePickerTakeOverDate.CustomFormat = "dd/MM/yyyy HH:mm:ss";
-            takeOverRepair_Load(null, null);
-            takeOverUnlock_Load(null, null);
-            takeOverAchat_Load(null, null);
+            takeOverRepair_Load(null);
+            takeOverUnlock_Load(null);
+            takeOverAchat_Load(null);
             textBoxTakeOverTotalPrice_Load();
             textBoxTakeOverAccompte.Text = 0.ToString();
             textBoxTakeOverPaid.Text = 0.ToString();
@@ -322,9 +323,10 @@ namespace MobileExpress
                                 TakeOverState state = Tools.GetEnumFromDescription<TakeOverState>(temp[19]);
                                 int id = Int32.Parse(temp[20]);
                                 bool verification = string.Compare("Oui", temp[21]) == 0;
+                                bool? optionGarantie = string.Compare("Oui", temp[22]) == 0;
                                 MEDatasDS.Add(new MEData(
                                     takeOverId, date, invoiceId, customerId, marqueId, modeleId, imei, repairTypeId, unlockTypeId, articleId,
-                                    quantity, price, monthsGarantie, remise, accompte, resteDu, paid, total, paymentMode, state, id, verification));
+                                    quantity, price, monthsGarantie, optionGarantie, remise, accompte, resteDu, paid, total, paymentMode, state, id, verification));
                             }
                         }
                         linenum++;
@@ -407,9 +409,9 @@ namespace MobileExpress
         {
             textBoxTakeOverLastName_Load(null);
             textBoxTakeOverTotalPrice_Load();
-            takeOverRepair_Load(null, null);
-            takeOverUnlock_Load(null, null);
-            takeOverAchat_Load(null, null);
+            takeOverRepair_Load(null);
+            takeOverUnlock_Load(null);
+            takeOverAchat_Load(null);
         }
         private int GetPreferedWidthForComboBox(string text, ComboBox comboBox)
         {
@@ -488,292 +490,114 @@ namespace MobileExpress
              */
         private void CleanDataGridViewRepair()
         {
-            dataGridViewTakeOverRepair.DataSource = null;
+            //if (Controls.Contains(dataGridViewTakeOverRepair))
+            //{
+            //    Controls.Remove(dataGridViewTakeOverRepair);
+            //}
+
+            this.dataGridViewTakeOverRepair.CellClick -= null;
+            this.dataGridViewTakeOverRepair.CellBeginEdit -= null;
+            this.dataGridViewTakeOverRepair.CellEndEdit -= null;
+            this.dataGridViewTakeOverRepair.CurrentCellDirtyStateChanged -= null;
+            this.dataGridViewTakeOverRepair.EditingControlShowing -= null;
+
             dataGridViewTakeOverRepair.Rows.Clear();
             dataGridViewTakeOverRepair.Columns.Clear();
 
+            dataGridViewTakeOverRepair.DataSource = null;
+            //dataGridViewTakeOverRepair.Dock = DockStyle.Fill;
             dataGridViewTakeOverRepair.AutoGenerateColumns = false; // add this line to disable auto-generation of columns
 
-            DataGridViewTextBoxColumn idColumn = new DataGridViewTextBoxColumn
-            {
-                Name = "textBoxTakeOverRepairId",
-                ValueType = typeof(int),
-                Visible = false,
-                ReadOnly = true,
-            };
-            DataGridViewTextBoxColumn repairMarqueColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Marque",
-                Name = "textBoxTakeOverRepairMarque",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewTextBoxColumn repairModeleColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Modèle",
-                Name = "textBoxTakeOverRepairModele",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewTextBoxColumn repairTypeColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Panne",
-                Name = "textBoxTakeOverRepairType",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewTextBoxColumn repairImeiColumn = new DataGridViewTextBoxColumn()
-            {
-                HeaderText = "IMEI",
-                Name = "textBoxTakeOverRepairIMEI",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewTextBoxColumn repairPriceColumn = new DataGridViewTextBoxColumn()
-            {
-                HeaderText = "Prix",
-                Name = "textBoxTakeOverRepairPrice",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(decimal),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewCheckBoxColumn garantieColumn = new DataGridViewCheckBoxColumn()
-            {
-                HeaderText = "Garantie",
-                Name = "checkBoxTakeOverRepairGarantie",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewButtonColumn buttonDeleteRow = new DataGridViewButtonColumn()
-            {
-                HeaderText = "Supprimer",
-                Name = "buttonTakeOverRepairDeleteRow",
-                Text = "Supprimer",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                Visible = true,
-                ReadOnly = false,
-            };
+            dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairIdColumn);
+            dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairMarqueColumn);
+            dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairModeleColumn);
+            dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairTypeColumn);
+            dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairIMEIColumn);
+            dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairPriceColumn);
+            dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairGarantieColumn);
+            dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairDeleteColumn);
 
-            dataGridViewTakeOverRepair.Columns.Add(idColumn);
-            dataGridViewTakeOverRepair.Columns.Add(repairMarqueColumn);
-            dataGridViewTakeOverRepair.Columns.Add(repairModeleColumn);
-            dataGridViewTakeOverRepair.Columns.Add(repairTypeColumn);
-            dataGridViewTakeOverRepair.Columns.Add(repairImeiColumn);
-            dataGridViewTakeOverRepair.Columns.Add(repairPriceColumn);
-            dataGridViewTakeOverRepair.Columns.Add(garantieColumn);
-            dataGridViewTakeOverRepair.Columns.Add(buttonDeleteRow);
+            this.dataGridViewTakeOverRepair.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverRepair_CellClick);
+            this.dataGridViewTakeOverRepair.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverRepair_CellBeginEdit);
+            this.dataGridViewTakeOverRepair.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverRepair_CellEndEdit);
+            this.dataGridViewTakeOverRepair.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverRepair_CurrentCellDirtyStateChanged);
+            this.dataGridViewTakeOverRepair.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverRepair_EditingControlShowing);
+            //Controls.Add(dataGridViewTakeOverRepair);
         }
         private void CleanDataGridViewUnlock()
         {
-            dataGridViewTakeOverUnlock.DataSource = null;
+            //if (Controls.Contains(dataGridViewTakeOverUnlock))
+            //{
+            //    Controls.Remove(dataGridViewTakeOverUnlock);
+            //}
+
+            this.dataGridViewTakeOverUnlock.CellClick -= null;
+            this.dataGridViewTakeOverUnlock.CellBeginEdit -= null;
+            this.dataGridViewTakeOverUnlock.CellEndEdit -= null;
+            this.dataGridViewTakeOverUnlock.CurrentCellDirtyStateChanged -= null;
+            this.dataGridViewTakeOverUnlock.EditingControlShowing -= null;
+
             dataGridViewTakeOverUnlock.Rows.Clear();
             dataGridViewTakeOverUnlock.Columns.Clear();
 
+            dataGridViewTakeOverUnlock.DataSource = null;
+            //dataGridViewTakeOverUnlock.Dock = DockStyle.Fill;
             dataGridViewTakeOverUnlock.AutoGenerateColumns = false; // add this line to disable auto-generation of columns
 
-            DataGridViewTextBoxColumn idColumn = new DataGridViewTextBoxColumn
-            {
-                Name = "textBoxTakeOverUnlockId",
-                ValueType = typeof(int),
-                Visible = false,
-                ReadOnly = true,
-            };
-            DataGridViewTextBoxColumn unlockMarqueColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Marque",
-                Name = "textBoxTakeOverUnlockMarque",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewTextBoxColumn unlockModeleColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Modèle",
-                Name = "textBoxTakeOverUnlockModele",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewTextBoxColumn unlockTypeColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Déblocage",
-                Name = "textBoxTakeOverUnlockType",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewTextBoxColumn unlockImeiColumn = new DataGridViewTextBoxColumn()
-            {
-                HeaderText = "IMEI",
-                Name = "textBoxTakeOverUnlockIMEI",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewTextBoxColumn unlockPriceColumn = new DataGridViewTextBoxColumn()
-            {
-                HeaderText = "Prix",
-                Name = "textBoxTakeOverUnlockPrice",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(decimal),
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewCheckBoxColumn garantieColumn = new DataGridViewCheckBoxColumn()
-            {
-                HeaderText = "Garantie",
-                Name = "checkBoxTakeOverUnlockGarantie",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                Visible = true,
-                ReadOnly = false,
-            };
-            DataGridViewButtonColumn buttonDeleteRow = new DataGridViewButtonColumn()
-            {
-                HeaderText = "Supprimer",
-                Name = "buttonTakeOverUnlockDeleteRow",
-                Text = "Supprimer",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                Visible = true,
-                ReadOnly = false,
-            };
+            dataGridViewTakeOverUnlock.Columns.Add(Services.TakeOverUnlockIdColumn);
+            dataGridViewTakeOverUnlock.Columns.Add(Services.TakeOverUnlockMarqueColumn);
+            dataGridViewTakeOverUnlock.Columns.Add(Services.TakeOverUnlockModeleColumn);
+            dataGridViewTakeOverUnlock.Columns.Add(Services.TakeOverUnlockTypeColumn);
+            dataGridViewTakeOverUnlock.Columns.Add(Services.TakeOverUnlockIMEIColumn);
+            dataGridViewTakeOverUnlock.Columns.Add(Services.TakeOverUnlockPriceColumn);
+            dataGridViewTakeOverUnlock.Columns.Add(Services.TakeOverUnlockGarantieColumn);
+            dataGridViewTakeOverUnlock.Columns.Add(Services.TakeOverUnlockDeleteColumn);
 
-            dataGridViewTakeOverUnlock.Columns.Add(idColumn);
-            dataGridViewTakeOverUnlock.Columns.Add(unlockMarqueColumn);
-            dataGridViewTakeOverUnlock.Columns.Add(unlockModeleColumn);
-            dataGridViewTakeOverUnlock.Columns.Add(unlockTypeColumn);
-            dataGridViewTakeOverUnlock.Columns.Add(unlockImeiColumn);
-            dataGridViewTakeOverUnlock.Columns.Add(unlockPriceColumn);
-            dataGridViewTakeOverUnlock.Columns.Add(garantieColumn);
-            dataGridViewTakeOverUnlock.Columns.Add(buttonDeleteRow);
+            this.dataGridViewTakeOverUnlock.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverUnlock_CellClick);
+            this.dataGridViewTakeOverUnlock.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverUnlock_CellBeginEdit);
+            this.dataGridViewTakeOverUnlock.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverUnlock_CellEndEdit);
+            this.dataGridViewTakeOverUnlock.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverUnlock_CurrentCellDirtyStateChanged);
+            this.dataGridViewTakeOverUnlock.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverUnlock_EditingControlShowing);
+            //Controls.Add(dataGridViewTakeOverUnlock);
         }
         private void CleanDataGridViewAchat()
         {
-            dataGridViewTakeOverAchat.DataSource = null;
+            //if (Controls.Contains(dataGridViewTakeOverAchat))
+            //{
+            //    Controls.Remove(dataGridViewTakeOverAchat);
+            //}
+
+            this.dataGridViewTakeOverAchat.CellClick -= null;
+            this.dataGridViewTakeOverAchat.CellBeginEdit -= null;
+            this.dataGridViewTakeOverAchat.CellEndEdit -= null;
+            this.dataGridViewTakeOverAchat.CurrentCellDirtyStateChanged -= null;
+            this.dataGridViewTakeOverAchat.EditingControlShowing -= null;
+
             dataGridViewTakeOverAchat.Rows.Clear();
             dataGridViewTakeOverAchat.Columns.Clear();
 
+            dataGridViewTakeOverAchat.DataSource = null;
+            //dataGridViewTakeOverAchat.Dock = DockStyle.Fill;
             dataGridViewTakeOverAchat.AutoGenerateColumns = false; // add this line to disable auto-generation of columns
 
-            DataGridViewTextBoxColumn idColumn = new DataGridViewTextBoxColumn
-            {
-                Name = "textBoxTakeOverAchatId",
-                ValueType = typeof(int),
-                Visible = false,
-                ReadOnly = true,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(idColumn);
-            DataGridViewTextBoxColumn achatMarqueColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Marque",
-                Name = "textBoxTakeOverAchatMarque",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(achatMarqueColumn);
-            DataGridViewTextBoxColumn achatModeleColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Modèle",
-                Name = "textBoxTakeOverAchatModele",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(achatModeleColumn);
-            DataGridViewTextBoxColumn achatTypeColumn = new DataGridViewTextBoxColumn
-            {
-                HeaderText = "Article",
-                Name = "textBoxTakeOverAchatType",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(string),
-                Visible = true,
-                ReadOnly = false,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(achatTypeColumn);
-            DataGridViewTextBoxColumn achatQuantityColumn = new DataGridViewTextBoxColumn()
-            {
-                HeaderText = "Quantité",
-                Name = "textBoxTakeOverAchatQuantity",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(int),
-                Visible = true,
-                ReadOnly = false,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(achatQuantityColumn);
-            DataGridViewTextBoxColumn achatPriceColumn = new DataGridViewTextBoxColumn()
-            {
-                HeaderText = "Prix",
-                Name = "textBoxTakeOverAchatPrice",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                ValueType = typeof(decimal),
-                Visible = true,
-                ReadOnly = false,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(achatPriceColumn);
-            DataGridViewCheckBoxColumn garantieColumn = new DataGridViewCheckBoxColumn()
-            {
-                HeaderText = "Garantie",
-                Name = "checkBoxTakeOverAchatGarantie",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                Visible = true,
-                ReadOnly = false,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(garantieColumn);
-            DataGridViewCheckBoxColumn remiseColumn = new DataGridViewCheckBoxColumn()
-            {
-                HeaderText = "Remise",
-                Name = "checkBoxTakeOverAchatRemise",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                Visible = true,
-                ReadOnly = false,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(remiseColumn);
-            DataGridViewButtonColumn buttonDeleteRow = new DataGridViewButtonColumn()
-            {
-                HeaderText = "Supprimer",
-                Name = "buttonTakeOverAchatDeleteRow",
-                Text = "Supprimer",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-                Visible = true,
-                ReadOnly = false,
-            };
-            dataGridViewTakeOverAchat.Columns.Add(buttonDeleteRow);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatIdColumn);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatMarqueColumn);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatModeleColumn);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatArticleColumn);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatQuantityColumn);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatPriceColumn);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatGarantieColumn);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatRemiseColumn);
+            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatDeleteColumn);
+
+            this.dataGridViewTakeOverAchat.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellClick);
+            this.dataGridViewTakeOverAchat.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverAchat_CellBeginEdit);
+            this.dataGridViewTakeOverAchat.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellEndEdit);
+            this.dataGridViewTakeOverAchat.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverAchat_CurrentCellDirtyStateChanged);
+            this.dataGridViewTakeOverAchat.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverAchat_EditingControlShowing);
+            //Controls.Add(dataGridViewTakeOverAchat);
         }
-        private void takeOverRepair_Load(List<MEData> mEDatas, int? rowIndex)
+        private void takeOverRepair_Load(List<MEData> mEDatas)
         {
             try
             {
@@ -797,56 +621,58 @@ namespace MobileExpress
                             textBoxTakeOverLastName_Load(customer);
                         }
 
-                        DataGridViewTextBoxCell idComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[index].Cells["textBoxTakeOverRepairId"];
-                        idComboBoxCell.Value = mEData.Id;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverRepair["id", index]).Value = mEData.Id;
                         if (dataGridViewTakeOverRepair.EditingControl is DataGridViewTextBoxEditingControl idTextBoxControl)
                         {
                             idTextBoxControl.Text = mEData.Id.ToString();
                         }
 
-                        int marqueId = (mEData.MarqueId.Value as int?).Value;
-                        Marque marque = MarquesDS.Find(x => x.Id == marqueId);
-                        DataGridViewTextBoxCell marqueComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[index].Cells["textBoxTakeOverRepairMarque"];
-                        marqueComboBoxCell.Value = marque.Name;
+                        Marque marque = null;
+                        if (mEData.MarqueId.HasValue)
+                        {
+                            marque = MarquesDS.FirstOrDefault(x => x.Id == mEData.MarqueId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverRepair["marque", index]).Value = marque?.Name ?? string.Empty;
                         if (dataGridViewTakeOverRepair.EditingControl is DataGridViewTextBoxEditingControl marqueTextBoxControl)
                         {
-                            marqueTextBoxControl.Text = marque.Name;
+                            marqueTextBoxControl.Text = marque?.Name ?? string.Empty;
                         }
 
-                        int modeleId = (mEData.ModeleId.Value as int?).Value;
-                        Modele modele = ModelesDS.Find(x => x.Id == modeleId);
-                        DataGridViewTextBoxCell modeleComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[index].Cells["textBoxTakeOverRepairModele"];
-                        modeleComboBoxCell.Value = modele.Name;
+                        Modele modele = null;
+                        if (mEData.ModeleId.HasValue)
+                        {
+                            modele = ModelesDS.FirstOrDefault(x => x.Id == mEData.ModeleId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverRepair["modele", index]).Value = modele?.Name ?? string.Empty;
                         if (dataGridViewTakeOverRepair.EditingControl is DataGridViewTextBoxEditingControl modeleTextBoxControl)
                         {
-                            modeleTextBoxControl.Text = modele.Name;
+                            modeleTextBoxControl.Text = modele?.Name ?? string.Empty;
                         }
 
-                        int type = (mEData.RepairTypeId.Value as int?).Value;
-                        RepairType repairType = TakeOverTypesDS.Find(x => x.Id == 0).RepairTypes.Find(x => x.Id == type);
-                        DataGridViewTextBoxCell typeTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[index].Cells["textBoxTakeOverRepairType"];
-                        typeTextBoxCell.Value = repairType.Name;
+                        RepairType repairType = null;
+                        if (mEData.RepairTypeId.HasValue)
+                        {
+                            repairType = TakeOverTypesDS.First(x => x.Id == 0).RepairTypes.FirstOrDefault(x => x.Id == mEData.RepairTypeId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverRepair["type", index]).Value = repairType?.Name ?? string.Empty;
                         if (dataGridViewTakeOverRepair.EditingControl is DataGridViewTextBoxEditingControl typeTextBoxControl)
                         {
-                            typeTextBoxControl.Text = repairType.Name;
+                            typeTextBoxControl.Text = repairType?.Name ?? string.Empty;
                         }
 
-                        DataGridViewTextBoxCell imeiTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[index].Cells["textBoxTakeOverRepairIMEI"];
-                        imeiTextBoxCell.Value = mEData.IMEI;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverRepair["imei", index]).Value = mEData.IMEI;
                         if (dataGridViewTakeOverRepair.EditingControl is DataGridViewTextBoxEditingControl imeiTextBoxControl)
                         {
                             imeiTextBoxControl.Text = mEData.IMEI;
                         }
 
-                        DataGridViewTextBoxCell priceTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[index].Cells["textBoxTakeOverRepairPrice"];
-                        priceTextBoxCell.Value = mEData.Price;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverRepair["price", index]).Value = mEData.Price;
                         if (dataGridViewTakeOverRepair.EditingControl is DataGridViewTextBoxEditingControl priceTextBoxControl)
                         {
                             priceTextBoxControl.Text = mEData.Price.ToString();
                         }
 
-                        DataGridViewCheckBoxCell garantieCheckBoxCell = (DataGridViewCheckBoxCell)dataGridViewTakeOverRepair.Rows[index].Cells["checkBoxTakeOverRepairGarantie"];
-                        garantieCheckBoxCell.Value = mEData.Garantie.HasValue;
+                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverRepair["garantie", index]).Value = mEData.Garantie.HasValue && mEData.Garantie.Value > 0;
 
                         textBoxTakeOverAccompte.Text = mEData.Accompte.ToString();
                         textBoxTakeOverResteDu.Text = mEData.ResteDu.ToString();
@@ -855,10 +681,6 @@ namespace MobileExpress
 
                         index++;
                     }
-                }
-                else if (rowIndex.HasValue)
-                {
-
                 }
                 else
                 {
@@ -870,14 +692,14 @@ namespace MobileExpress
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
-        private void takeOverUnlock_Load(List<MEData> mEDatas, int? rowIndex)
+        private void takeOverUnlock_Load(List<MEData> mEDatas)
         {
             try
             {
                 if (mEDatas?.Any() ?? false)
                 {
                     CleanDataGridViewUnlock();
-                    
+
                     Customer customer = null;
                     int index = 0;
                     foreach (MEData mEData in mEDatas)
@@ -894,56 +716,58 @@ namespace MobileExpress
 
                         dataGridViewTakeOverUnlock.Rows.Add();
 
-                        DataGridViewTextBoxCell idComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[index].Cells["textBoxTakeOverUnlockId"];
-                        idComboBoxCell.Value = mEData.Id;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverUnlock["id", index]).Value = mEData.Id;
                         if (dataGridViewTakeOverUnlock.EditingControl is DataGridViewTextBoxEditingControl idTextBoxControl)
                         {
                             idTextBoxControl.Text = mEData.Id.ToString();
                         }
 
-                        int marqueId = (mEData.MarqueId.Value as int?).Value;
-                        Marque marque = MarquesDS.Find(x => x.Id == marqueId);
-                        DataGridViewTextBoxCell marqueComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[index].Cells["textBoxTakeOverUnlockMarque"];
-                        marqueComboBoxCell.Value = marque.Name;
+                        Marque marque = null;
+                        if (mEData.MarqueId.HasValue)
+                        {
+                            marque = MarquesDS.FirstOrDefault(x => x.Id == mEData.MarqueId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverUnlock["marque", index]).Value = marque?.Name ?? string.Empty;
                         if (dataGridViewTakeOverUnlock.EditingControl is DataGridViewTextBoxEditingControl marqueTextBoxControl)
                         {
-                            marqueTextBoxControl.Text = marque.Name;
+                            marqueTextBoxControl.Text = marque?.Name ?? string.Empty;
                         }
 
-                        int modeleId = (mEData.ModeleId.Value as int?).Value;
-                        Modele modele = ModelesDS.Find(x => x.Id == modeleId);
-                        DataGridViewTextBoxCell modeleComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[index].Cells["textBoxTakeOverUnlockModele"];
-                        modeleComboBoxCell.Value = modele.Name;
+                        Modele modele = null;
+                        if (mEData.ModeleId.HasValue)
+                        {
+                            modele = ModelesDS.FirstOrDefault(x => x.Id == mEData.ModeleId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverUnlock["modele", index]).Value = modele?.Name ?? string.Empty;
                         if (dataGridViewTakeOverUnlock.EditingControl is DataGridViewTextBoxEditingControl modeleTextBoxControl)
                         {
-                            modeleTextBoxControl.Text = modele.Name;
+                            modeleTextBoxControl.Text = modele?.Name ?? string.Empty;
                         }
 
-                        int type = (mEData.UnlockTypeId.Value as int?).Value;
-                        UnlockType unlockType = TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes.Find(x => x.Id == type);
-                        DataGridViewTextBoxCell typeTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[index].Cells["textBoxTakeOverUnlockType"];
-                        typeTextBoxCell.Value = unlockType.Name;
+                        UnlockType unlockType = null;
+                        if (mEData.UnlockTypeId.HasValue)
+                        {
+                            unlockType = TakeOverTypesDS.First(x => x.Id == 1).UnlockTypes.FirstOrDefault(x => x.Id == mEData.UnlockTypeId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverUnlock["type", index]).Value = unlockType?.Name ?? string.Empty;
                         if (dataGridViewTakeOverUnlock.EditingControl is DataGridViewTextBoxEditingControl typeTextBoxControl)
                         {
-                            typeTextBoxControl.Text = unlockType.Name;
+                            typeTextBoxControl.Text = unlockType?.Name ?? string.Empty;
                         }
 
-                        DataGridViewTextBoxCell imeiTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[index].Cells["textBoxTakeOverUnlockIMEI"];
-                        imeiTextBoxCell.Value = mEData.IMEI;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverUnlock["imei", index]).Value = mEData.IMEI;
                         if (dataGridViewTakeOverUnlock.EditingControl is DataGridViewTextBoxEditingControl imeiTextBoxControl)
                         {
                             imeiTextBoxControl.Text = mEData.IMEI;
                         }
 
-                        DataGridViewTextBoxCell priceTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[index].Cells["textBoxTakeOverUnlockPrice"];
-                        priceTextBoxCell.Value = mEData.Price;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverUnlock["price", index]).Value = mEData.Price;
                         if (dataGridViewTakeOverUnlock.EditingControl is DataGridViewTextBoxEditingControl priceTextBoxControl)
                         {
                             priceTextBoxControl.Text = mEData.Price.ToString();
                         }
 
-                        DataGridViewCheckBoxCell garantieCheckBoxCell = (DataGridViewCheckBoxCell)dataGridViewTakeOverUnlock.Rows[index].Cells["checkBoxTakeOverUnlockGarantie"];
-                        garantieCheckBoxCell.Value = mEData.Garantie.HasValue;
+                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverUnlock["garantie", index]).Value = mEData.Garantie.HasValue && mEData.Garantie.Value > 0;
 
                         textBoxTakeOverAccompte.Text = mEData.Accompte.ToString();
                         textBoxTakeOverResteDu.Text = mEData.ResteDu.ToString();
@@ -952,9 +776,6 @@ namespace MobileExpress
 
                         index++;
                     }
-                }
-                else if (rowIndex.HasValue)
-                {
                 }
                 else
                 {
@@ -966,7 +787,7 @@ namespace MobileExpress
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
-        private void takeOverAchat_Load(List<MEData> mEDatas, int? rowIndex)
+        private void takeOverAchat_Load(List<MEData> mEDatas)
         {
             try
             {
@@ -988,59 +809,60 @@ namespace MobileExpress
 
                         dataGridViewTakeOverAchat.Rows.Add();
 
-                        DataGridViewTextBoxCell idComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatId"];
-                        idComboBoxCell.Value = mEData.Id;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["id", index]).Value = mEData.Id;
                         if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl idTextBoxControl)
                         {
                             idTextBoxControl.Text = mEData.Id.ToString();
                         }
 
-                        int marqueId = (mEData.MarqueId.Value as int?).Value;
-                        Marque marque = MarquesDS.Find(x => x.Id == marqueId);
-                        DataGridViewTextBoxCell marqueComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatMarque"];
-                        marqueComboBoxCell.Value = marque.Name;
+                        Marque marque = null;
+                        if (mEData.MarqueId.HasValue)
+                        {
+                            marque = MarquesDS.First(x => x.Id == mEData.MarqueId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["marque", index]).Value = marque?.Name ?? string.Empty;
                         if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl marqueTextBoxControl)
                         {
-                            marqueTextBoxControl.Text = marque.Name;
+                            marqueTextBoxControl.Text = marque?.Name ?? string.Empty;
                         }
 
-                        int modeleId = (mEData.ModeleId.Value as int?).Value;
-                        Modele modele = ModelesDS.Find(x => x.Id == modeleId);
-                        DataGridViewTextBoxCell modeleComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatModele"];
-                        modeleComboBoxCell.Value = modele.Name;
+                        Modele modele = null;
+                        if (mEData.ModeleId.HasValue)
+                        {
+                            modele = ModelesDS.First(x => x.Id == mEData.ModeleId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["modele", index]).Value = modele?.Name ?? string.Empty;
                         if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl modeleTextBoxControl)
                         {
-                            modeleTextBoxControl.Text = modele.Name;
+                            modeleTextBoxControl.Text = modele?.Name ?? string.Empty;
                         }
 
-                        int type = (mEData.ArticleId.Value as int?).Value;
-                        Article article = TakeOverTypesDS.Find(x => x.Id == 2).Articles.Find(x => x.Id == type);
-                        DataGridViewTextBoxCell typeTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatType"];
-                        typeTextBoxCell.Value = article.Name;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl typeTextBoxControl)
+                        Article article = null;
+                        if (mEData.ArticleId.HasValue)
                         {
-                            typeTextBoxControl.Text = article.Name;
+                            article = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(x => x.Id == mEData.ArticleId.Value);
+                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["article", index]).Value = article?.Name ?? string.Empty;
+                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl articleTextBoxControl)
+                        {
+                            articleTextBoxControl.Text = article?.Name ?? string.Empty;
                         }
 
-                        DataGridViewTextBoxCell quantityTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatQuantity"];
-                        quantityTextBoxCell.Value = mEData.Quantity;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["quantity", index]).Value = mEData.Quantity;
                         if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl quantityTextBoxControl)
                         {
                             quantityTextBoxControl.Text = mEData.Quantity.ToString();
                         }
 
-                        DataGridViewTextBoxCell priceTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatPrice"];
-                        priceTextBoxCell.Value = mEData.Price;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["price", index]).Value = mEData.Price;
                         if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl priceTextBoxControl)
                         {
                             priceTextBoxControl.Text = mEData.Price.ToString();
                         }
 
-                        DataGridViewCheckBoxCell garantieCheckBoxCell = (DataGridViewCheckBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["checkBoxTakeOverAchatGarantie"];
-                        garantieCheckBoxCell.Value = mEData.Garantie.HasValue;
+                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["garantie", index]).Value = mEData.Garantie.HasValue && mEData.Garantie.Value > 0;
 
-                        DataGridViewCheckBoxCell remiseCheckBoxCell = (DataGridViewCheckBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["checkBoxTakeOverAchatRemise"];
-                        remiseCheckBoxCell.Value = mEData.Remise.HasValue;
+                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["remise", index]).Value = mEData.Remise.HasValue && mEData.Remise.Value > 0;
 
                         textBoxTakeOverAccompte.Text = mEData.Accompte.ToString();
                         textBoxTakeOverResteDu.Text = mEData.ResteDu.ToString();
@@ -1049,10 +871,6 @@ namespace MobileExpress
 
                         index++;
                     }
-                }
-                else if (rowIndex.HasValue)
-                {
-
                 }
                 else
                 {
@@ -1232,7 +1050,7 @@ namespace MobileExpress
                             Id = x.Id,
                             PriseEnCharge = x.TakeOverId,
                             Date = x.Date.ToString("dd/MM/yyyy HH:mm:ss"),
-                            Facture = x.InvoiceId.HasValue && x.InvoiceId > 0 ? "Facturé" : "Non facturé",
+                            Facture = x.InvoiceId.HasValue && x.InvoiceId > 0 && x.State == TakeOverState.PickedUp ? "Facturé" : "Non facturé",
                             FactureNumero = x.InvoiceId.HasValue ? x.InvoiceId.Value : 0,
                             TypeItem = typeItem,
                             Item = item,
@@ -1253,7 +1071,7 @@ namespace MobileExpress
                         };
                     }).OrderByDescending(x => x.Date)
                     .ToList();
-                int? invoiceId = MEDatasDS.OrderByDescending(x => x.InvoiceId ?? 0)?.FirstOrDefault()?.InvoiceId;
+                int? invoiceId = (MEDatasDS.OrderByDescending(x => x.InvoiceId ?? 0)?.FirstOrDefault()?.InvoiceId ?? 0) + 1;
                 if (historiqueOneViews?.Any() ?? false)
                 {
                     using (HistoriqueOneViewForm dialog = new HistoriqueOneViewForm(
@@ -1293,7 +1111,7 @@ namespace MobileExpress
                             string path = Paths.ReceiptDSPath;
 
                             List<string> items = new List<string>() { "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;Quantité;Prix;Garantie;Remise;Accompte;Reste dû;Payé;Total;Numéro de mode de paiement;Etat;Id;Vérification" };
-                            items.AddRange(MEDatasDS.Select(x => $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};{x.ResteDu};{x.Paid};{x.Total};{x.PaymentMode};{(int)x.State};{x.Id};{(x.Verification ? "Oui" : "Non")}"));
+                            items.AddRange(MEDatasDS.Select(x => $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};{x.Id};{(x.Verification ? "Oui" : "Non")}"));
                             Tools.RewriteDataToFile(items, path, false);
 
                             InitializeAll();
@@ -1399,7 +1217,7 @@ namespace MobileExpress
                 {
                     HeaderText = "Quantité",
                     Name = "textBoxStockQuantity",
-                    ValueType= typeof(int),
+                    ValueType = typeof(int),
                     ReadOnly = true,
                     AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
                 };
@@ -1655,7 +1473,7 @@ namespace MobileExpress
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
-        private void buttonTakeOverSearch_Click_1(object sender, EventArgs e)
+        private void buttonTakeOverSearch_Click(object sender, EventArgs e)
         {
             try
             {
@@ -1673,9 +1491,9 @@ namespace MobileExpress
                     {
                         MEData mEData = receipts[i];
                         string tabName = mEData.RepairTypeId.HasValue ? "Réparation" : mEData.UnlockTypeId.HasValue ? "Déblocage" : "Achat";
-                        RepairType produitRepair = mEData.RepairTypeId.HasValue ? TakeOverTypesDS.First(x => x.Id == 0).RepairTypes.First(x => x.Id == (mEData.RepairTypeId.Value as int?).Value) : null;
-                        UnlockType produitUnlock = mEData.UnlockTypeId.HasValue ? TakeOverTypesDS.First(x => x.Id == 1).UnlockTypes.First(x => x.Id == (mEData.UnlockTypeId.Value as int?).Value) : null;
-                        Article produitArticle = mEData.ArticleId.HasValue ? TakeOverTypesDS.First(x => x.Id == 2).Articles.First(x => x.Id == (mEData.ArticleId.Value as int?).Value) : null;
+                        RepairType produitRepair = mEData.RepairTypeId.HasValue ? TakeOverTypesDS.First(x => x.Id == 0).RepairTypes.FirstOrDefault(x => x.Id == (mEData.RepairTypeId.Value as int?).Value) : null;
+                        UnlockType produitUnlock = mEData.UnlockTypeId.HasValue ? TakeOverTypesDS.First(x => x.Id == 1).UnlockTypes.FirstOrDefault(x => x.Id == (mEData.UnlockTypeId.Value as int?).Value) : null;
+                        Article produitArticle = mEData.ArticleId.HasValue ? TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(x => x.Id == (mEData.ArticleId.Value as int?).Value) : null;
 
                         int marqueId = receipts[i].MarqueId.HasValue ? receipts[i].MarqueId.Value : 0;
                         Marque marque = MarquesDS.FirstOrDefault(x => x.Id == marqueId);
@@ -1685,18 +1503,10 @@ namespace MobileExpress
 
                         string marqueText = marque?.Name;
                         string modeleText = modele?.Name;
-                        string productName = produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Name;
-                        if (!string.IsNullOrWhiteSpace(marqueText))
-                        {
-                            if (!string.IsNullOrWhiteSpace(modeleText))
-                            {
-                                productName = marqueText + " " + modeleText + " - " + productName;
-                            }
-                            else
-                            {
-                                productName = marqueText + " - " + productName;
-                            }
-                        }
+                        string productName =
+                            !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Name) :
+                            !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Name) :
+                            (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Name);
 
                         if (mEData.Garantie.HasValue)
                         {
@@ -1705,7 +1515,8 @@ namespace MobileExpress
                                 id: mEData.Id,
                                 tabName: tabName,
                                 productName: productName,
-                                months: mEData.Garantie.Value));
+                                months: mEData.Garantie.Value,
+                                option: mEData.GarantieOption ?? false));
                         }
                         if (mEData.Remise.HasValue)
                         {
@@ -1724,11 +1535,11 @@ namespace MobileExpress
                     checkBoxVirement.Checked = virement;
 
                     // initialiser les onglets
-                    takeOverRepair_Load(receipts.Where(x => x.RepairTypeId.HasValue).ToList(), null);
-                    takeOverUnlock_Load(receipts.Where(x => x.UnlockTypeId.HasValue).ToList(), null);
-                    takeOverAchat_Load(receipts.Where(x => x.ArticleId.HasValue).ToList(), null);
+                    takeOverRepair_Load(receipts.Where(x => x.RepairTypeId.HasValue).ToList());
+                    takeOverUnlock_Load(receipts.Where(x => x.UnlockTypeId.HasValue).ToList());
+                    takeOverAchat_Load(receipts.Where(x => x.ArticleId.HasValue).ToList());
 
-                    UpdateTotalPrice(null, null, null, null);
+                    UpdateTotalPrice();
                 }
                 else
                 {
@@ -1793,12 +1604,13 @@ namespace MobileExpress
                             int? invoiceIdNewMEData = mData.InvoiceId;
                             mData.Garantie = mData.Garantie.HasValue ? mData.Garantie : existingData.Garantie;
                             mData.Remise = mData.Remise.HasValue ? mData.Remise : existingData.Remise;
-                            MEDatasDS[MEDatasDS.IndexOf(existingData)] = mData;
 
                             if (invoiceIdMEData != invoiceIdNewMEData)
                             {
                                 mData.InvoiceId = invoiceIdMEData.HasValue && invoiceIdNewMEData.HasValue ? invoiceIdNewMEData : invoiceIdMEData;
                             }
+
+                            MEDatasDS[MEDatasDS.IndexOf(existingData)] = mData;
                         }
                         else
                         {
@@ -1958,31 +1770,32 @@ namespace MobileExpress
                                 }
                             }
                         }
-                        DialogResult acccompteResult = MessageBox.Show($"Voulez-vous prendre en compte l'accompte de {accompteAFacturer.ToString()} versé ?", "Information", MessageBoxButtons.YesNo);
-                        if (acccompteResult == DialogResult.Yes)
+                        if (accompteAFacturer > 0)
                         {
-                            payeAFacturer += accompteAFacturer;
+                            DialogResult acccompteResult = MessageBox.Show($"Voulez-vous prendre en compte l'accompte de {accompteAFacturer.ToString()} versé ?", "Information", MessageBoxButtons.YesNo);
+                            if (acccompteResult == DialogResult.Yes)
+                            {
+                                payeAFacturer += accompteAFacturer;
+                            }
                         }
-                        (bool cb, bool espece, bool virement) = Tools.GetBoolFromPaymentMode(factureACreer.First().PaymentMode);
+                        string modeDePaiement = Tools.GetEnumDescriptionFromEnum<PaymentMode>(factureACreer.First().PaymentMode);
                         // générer pdf
                         string customerName = (
                             !string.IsNullOrWhiteSpace(takeOverCustomer.LastName) && !string.IsNullOrWhiteSpace(takeOverCustomer.FirstName) ? takeOverCustomer.LastName + " " + takeOverCustomer.FirstName :
                             !string.IsNullOrWhiteSpace(takeOverCustomer.LastName) && string.IsNullOrWhiteSpace(takeOverCustomer.FirstName) ? takeOverCustomer.LastName :
                             takeOverCustomer.FirstName);
                         string title = $@"Facture_{(invoiceId < 10 ? $"0{invoiceId}" : invoiceId.ToString())}_PriseEnCharge_{(factureACreer.First().TakeOverId < 10 ? $"0{factureACreer.First().TakeOverId}" : factureACreer.First().TakeOverId.ToString())}_{factureACreer.First().Date.ToString("ddMMyyyyHHmmss")}";
-                        Tools.GenerateDocx(
+                        Services.GenerateDocx(
                             type: 1,
                             logo: Paths.LogoPath,
                             customerName: (takeOverCustomer.Sexe == Sexe.Femme ? $"Madame {customerName}" : takeOverCustomer.Sexe == Sexe.Homme ? $"Monsieur {customerName}" : customerName),
                             customerPhone: takeOverCustomer.PhoneNumber,
                             customerEmail: takeOverCustomer.EmailAddress,
-                            takeOverDate: factureACreer.First().Date.ToString("dd/MM/yyyy"),
+                            takeOverDate: factureACreer.First().Date.ToString("dddd dd MMMM yyyy"),
                             takeOverNumber: (invoiceId < 10 ? $"0{invoiceId}" : invoiceId.ToString()),
                             accompte: null,
                             paid: payeAFacturer,
-                            carteBleu: cb,
-                            espece: espece,
-                            virement: virement,
+                            modeDePaiement: modeDePaiement,
                             mEDatas: factureACreer,
                             path: $@"{Paths.FactureDirectory}\{title}.docx",
                             title: title,
@@ -2017,9 +1830,10 @@ namespace MobileExpress
                         takeOverCustomer.Sexe == Sexe.Unknown ? takeOverCustomer.LastName + " " + takeOverCustomer.FirstName :
                         takeOverCustomer.Sexe == Sexe.Femme ? "Mme. " + takeOverCustomer.LastName + " " + takeOverCustomer.FirstName :
                         "M. " + takeOverCustomer.LastName + " " + takeOverCustomer.FirstName;
+                    PaymentMode paymentMode = Tools.GetPaymentModeFromBool(checkBoxCb.Checked, checkBoxEspece.Checked, checkBoxVirement.Checked);
                     // générer pdf
                     string title = $@"PriseEnCharge_{(takeOverId < 10 ? $"0{takeOverId}" : takeOverId.ToString())}_{date.ToString("ddMMyyyyHHmmss")}";
-                    Tools.GenerateDocx(
+                    Services.GenerateDocx(
                         type: 0,
                         logo: Paths.LogoPath,
                         customerName: customerName,
@@ -2030,9 +1844,7 @@ namespace MobileExpress
                         accompte: accompte,
                         paid: paid,
                         mEDatas: mEDatas,
-                        carteBleu: checkBoxCb.Checked,
-                        espece: checkBoxEspece.Checked,
-                        virement: checkBoxVirement.Checked,
+                        modeDePaiement: Tools.GetEnumDescriptionFromEnum<PaymentMode>(paymentMode),
                         path: $@"{Paths.PriseEnChargeDirectory}\{title}.docx",
                         title: title,
                         repairTypeNames: repairTypeNames,
@@ -2046,13 +1858,10 @@ namespace MobileExpress
                         // Ouvrir le fichier PDF dans une fenêtre externe
                         Process.Start($@"{Paths.PriseEnChargeDirectory}\{title}.docx");
 
-                        if (type.Contains("achats"))
+                        DialogResult dialogResultFacture = MessageBox.Show("Voulez-vous générer une facture ?", "Information", MessageBoxButtons.YesNo);
+                        if (dialogResultFacture == DialogResult.Yes)
                         {
-                            DialogResult dialogResultFacture = MessageBox.Show("Voulez-vous générer une facture ?", "Information", MessageBoxButtons.YesNo);
-                            if (dialogResultFacture == DialogResult.Yes)
-                            {
-                                GenerateFacture(type, mEDatas, takeOverCustomer, takeOverId, date, repairTypeNames, unlockTypeNames, articles, marques, modeles);
-                            }
+                            GenerateFacture(type, mEDatas, takeOverCustomer, takeOverId, date, repairTypeNames, unlockTypeNames, articles, marques, modeles);
                         }
                     }
                     else
@@ -2084,13 +1893,13 @@ namespace MobileExpress
         {
             if (!row.IsNewRow)
             {
-                int id = (int)row.Cells[type == 0 ? "textBoxTakeOverRepairId": type == 1 ? "textBoxTakeOverUnlockId" : "textBoxTakeOverAchatId"].Value;
-                string marqueText = row.Cells[type == 0 ? "textBoxTakeOverRepairMarque" : type == 1 ? "textBoxTakeOverUnlockMarque" : "textBoxTakeOverAchatMarque"].Value as string;
-                string modeleText = row.Cells[type == 0 ? "textBoxTakeOverRepairModele" : type == 1 ? "textBoxTakeOverUnlockModele" : "textBoxTakeOverAchatModele"].Value as string;
-                string typeText = row.Cells[type == 0 ? "textBoxTakeOverRepairType" : type == 1 ? "textBoxTakeOverUnlockType" : "textBoxTakeOverAchatType"].Value as string;
-                decimal? price = row.Cells[type == 0 ? "textBoxTakeOverRepairPrice" : type == 1 ? "textBoxTakeOverUnlockPrice" : "textBoxTakeOverAchatPrice"].Value as decimal?;
-                int quantity = type == 2 ? (row.Cells["textBoxTakeOverAchatQuantity"].Value as int?).Value : 1;
-                bool ? isGarantie = (bool?)row.Cells[type == 0 ? "checkBoxTakeOverRepairGarantie" : type == 1 ? "checkBoxTakeOverUnlockGarantie" : "checkBoxTakeOverAchatGarantie"].Value;
+                int id = (int)row.Cells["id"].Value;
+                string marqueText = row.Cells["marque"].Value as string;
+                string modeleText = row.Cells["modele"].Value as string;
+                string typeText = row.Cells[type == 2 ? "article" : "type"].Value as string;
+                decimal? price = row.Cells["price"].Value as decimal?;
+                int quantity = type == 2 ? (row.Cells["quantity"].Value as int?).Value : 1;
+                bool? isGarantie = (bool?)row.Cells["garantie"].Value;
 
                 Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueText?.ToLower()) == 0);
                 Modele modele = ModelesDS.FirstOrDefault(x => x.MarqueId == (marque?.Id ?? 0) && string.Compare(x.Name.ToLower(), modeleText?.ToLower()) == 0);
@@ -2139,8 +1948,9 @@ namespace MobileExpress
                 MEData newTakeOver = new MEData(
                     takeOverId, date, null, takeOverCustomer.Id, marque?.Id,
                     modele?.Id, null, repairType?.Id, unlockType?.Id, article?.Id,
-                    quantity, price, garantie == null ? null : garantie.Months, null, accompte, resteDu,
-                    paid, total, paymentMode, TakeOverState.InProgress, id, false);
+                    quantity, price, garantie == null ? null : garantie.Months, garantie == null ? null : garantie.Option, null,
+                    accompte, resteDu, paid, total, paymentMode,
+                    TakeOverState.InProgress, id, false);
 
                 mEDatas.Add(newTakeOver);
             }
@@ -2204,7 +2014,7 @@ namespace MobileExpress
                                 }
                             }
                         }
-                        UpdateTotalPrice(null, null, null, null);
+                        UpdateTotalPrice();
                     }
                 }
             }
@@ -2234,7 +2044,10 @@ namespace MobileExpress
                             articleToBuy.Quantity = oldQuantity;
                         }
                         Article articleToUpdate = TakeOverTypesDS.First(x => x.Id == 2).Articles.First(y => y.Id == articleToBuy.Id);
-                        articleToUpdate.Quantity -= articleToBuy.Quantity;
+                        if (action != StockAction.Achat)
+                        {
+                            articleToUpdate.Quantity -= articleToBuy.Quantity;
+                        }
 
                         dataGridViewTakeOverAchat.Rows.Add();
 
@@ -2242,66 +2055,36 @@ namespace MobileExpress
                         int index = 0;
                         foreach (DataGridViewRow row in dataGridViewTakeOverAchat.Rows)
                         {
-                            if (row.IsNewRow || !(row.Cells["textBoxTakeOverAchatId"].Value as int?).HasValue)
+                            if (row.IsNewRow || !(row.Cells["id"].Value as int?).HasValue)
                                 break;
                             index++;
                         }
-                        
+
                         // remplir dataGridViewTakeOverAchat.Rows[dernierRowIndexVide]
                         int id = GetItemId();
-                        DataGridViewTextBoxCell idComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatId"];
-                        idComboBoxCell.Value = id;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl idTextBoxControl)
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["id", index]).Value = id;
+
+                        Marque marque = null;
+                        if (articleToBuy.MarqueId.HasValue)
                         {
-                            idTextBoxControl.Text = id.ToString();
+                            marque = MarquesDS.First(x => x.Id == articleToBuy.MarqueId.Value);
                         }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["marque", index]).Value = marque?.Name ?? string.Empty;
 
-                        int marqueId = (articleToBuy.MarqueId.Value as int?).Value;
-                        Marque marque = MarquesDS.Find(x => x.Id == marqueId);
-                        DataGridViewTextBoxCell marqueComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatMarque"];
-                        marqueComboBoxCell.Value = marque.Name;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl marqueTextBoxControl)
+                        Modele modele = null;
+                        if (articleToBuy.ModeleId.HasValue)
                         {
-                            marqueTextBoxControl.Text = marque.Name;
+                            modele = ModelesDS.First(x => x.Id == articleToBuy.ModeleId.Value);
                         }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["modele", index]).Value = modele?.Name ?? string.Empty;
 
-                        int modeleId = (articleToBuy.ModeleId.Value as int?).Value;
-                        Modele modele = ModelesDS.Find(x => x.Id == modeleId);
-                        DataGridViewTextBoxCell modeleComboBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatModele"];
-                        modeleComboBoxCell.Value = modele.Name;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl modeleTextBoxControl)
-                        {
-                            modeleTextBoxControl.Text = modele.Name;
-                        }
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["article", index]).Value = articleToBuy.Name;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["quantity", index]).Value = articleToBuy.Quantity;
+                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["price", index]).Value = articleToBuy.Price;
+                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["garantie", index]).Value = false;
+                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["remise", index]).Value = false;
 
-                        DataGridViewTextBoxCell typeTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatType"];
-                        typeTextBoxCell.Value = articleToBuy.Name;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl typeTextBoxControl)
-                        {
-                            typeTextBoxControl.Text = articleToBuy.Name;
-                        }
-
-                        DataGridViewTextBoxCell quantityTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatQuantity"];
-                        quantityTextBoxCell.Value = articleToBuy.Quantity;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl quantityTextBoxControl)
-                        {
-                            quantityTextBoxControl.Text = articleToBuy.Quantity.ToString();
-                        }
-
-                        DataGridViewTextBoxCell priceTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["textBoxTakeOverAchatPrice"];
-                        priceTextBoxCell.Value = articleToBuy.Price;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl priceTextBoxControl)
-                        {
-                            priceTextBoxControl.Text = articleToBuy.Price.ToString();
-                        }
-
-                        DataGridViewCheckBoxCell garantieCheckBoxCell = (DataGridViewCheckBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["checkBoxTakeOverAchatGarantie"];
-                        garantieCheckBoxCell.Value = false;
-
-                        DataGridViewCheckBoxCell remiseCheckBoxCell = (DataGridViewCheckBoxCell)dataGridViewTakeOverAchat.Rows[index].Cells["checkBoxTakeOverAchatRemise"];
-                        remiseCheckBoxCell.Value = false;
-
-                        UpdateTotalPrice(null, null, null, null);
+                        UpdateTotalPrice();
                         StockUpdateDatabase(articleToUpdate, 0, false);
                     }
                 }
@@ -2323,77 +2106,64 @@ namespace MobileExpress
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverRepair.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverRepair.Columns.Count &&
+                    !dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow &&
+                    (dataGridViewTakeOverRepair["id", e.RowIndex].Value as int?).HasValue)
                 {
-                    if (e.ColumnIndex == dataGridViewTakeOverRepair.Columns["buttonTakeOverRepairDeleteRow"].Index)
+                    int id = (dataGridViewTakeOverRepair["id", e.RowIndex].Value as int?).Value;
+
+                    if (e.ColumnIndex == dataGridViewTakeOverRepair["delete", e.RowIndex].ColumnIndex)
                     {
-                        // Suppression de la ligne
                         dataGridViewTakeOverRepair.Rows.RemoveAt(e.RowIndex);
                     }
-                    else if (e.ColumnIndex == dataGridViewTakeOverRepair.Columns["checkBoxTakeOverRepairGarantie"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverRepair["garantie", e.RowIndex].ColumnIndex)
                     {
-                        int? id = ((DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["textBoxTakeOverRepairId"]).Value as int?;
-                        if (id.HasValue)
-                        {
-                            bool? isGarantie = (dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["checkBoxTakeOverRepairGarantie"]).Value as bool?;
-                            // si le click == coché : retirer la garantie
-                            if (isGarantie.HasValue && isGarantie.Value)
-                            {
-                                (dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["checkBoxTakeOverRepairGarantie"]).Value = false;
+                        bool isGarantie = (dataGridViewTakeOverRepair["garantie", e.RowIndex].Value as bool?).HasValue ?
+                            (dataGridViewTakeOverRepair["garantie", e.RowIndex].Value as bool?).Value : false;
 
-                                MEData oldMEData = MEDatasDS.FirstOrDefault(x => x.Id == id.Value);
-                                // si oldreceipt != null : c'est un ancien receipt
-                                // retirer la garantie de receipt
-                                if (oldMEData != null)
+                        // si le click == déjà coché : retirer la garantie
+                        if (isGarantie)
+                        {
+                            dataGridViewTakeOverRepair["garantie", e.RowIndex].Value = false;
+
+                            MEData oldMEData = MEDatasDS.FirstOrDefault(x => x.Id == id);
+                            // si oldreceipt != null : c'est un ancien receipt
+                            // retirer la garantie de receipt
+                            if (oldMEData != null)
+                            {
+                                for (int i = 0; i < MEDatasDS.Count; i++)
                                 {
-                                    for (int i = 0; i < MEDatasDS.Count; i++)
+                                    if (MEDatasDS[i].Id == oldMEData.Id)
                                     {
-                                        if (MEDatasDS[i].Id == oldMEData.Id)
-                                        {
-                                            MEDatasDS[i].Garantie = null;
-                                            break;
-                                        }
-                                    }
-                                }
-                                // supprimer la ligne de garantie
-                                for (int i = 0; i < GarantiesTemp.Count; i++)
-                                {
-                                    if (id.Value == GarantiesTemp[i].Id)
-                                    {
-                                        GarantiesTemp.RemoveAt(i);
+                                        MEDatasDS[i].Garantie = null;
                                         break;
                                     }
                                 }
                             }
-                            // si le click == décoché : ajouter la garantie
-                            else if (!isGarantie.HasValue || !isGarantie.Value)
+                            // supprimer la ligne de garantie
+                            for (int i = 0; i < GarantiesTemp.Count; i++)
                             {
-                                (dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["checkBoxTakeOverRepairGarantie"]).Value = true;
-
-                                // ajouter la ligne de garantie
-                                string marqueText = (dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["textBoxTakeOverRepairMarque"]).Value as string;
-                                string modeleText = (dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["textBoxTakeOverRepairModele"]).Value as string;
-                                string typeText = (dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["textBoxTakeOverRepairType"]).Value as string;
-
-                                string productName = typeText;
-                                if (!string.IsNullOrWhiteSpace(marqueText))
+                                if (id == GarantiesTemp[i].Id)
                                 {
-                                    if (!string.IsNullOrWhiteSpace(modeleText))
-                                    {
-                                        productName = marqueText + " " + modeleText + " - " + productName;
-                                    }
-                                    else
-                                    {
-                                        productName = marqueText + " - " + productName;
-                                    }
+                                    GarantiesTemp.RemoveAt(i);
+                                    break;
                                 }
-
-                                GarantiesTemp.Add(new Garantie(tabName: "Réparation", id: id.Value, productName: productName, months: null));
                             }
                         }
-                        else
+                        // si le click == décoché : ajouter la garantie
+                        else if (!isGarantie)
                         {
-                            MessageBox.Show("Assurez-vous d'avoir renseigné un produit.", "Alerte", MessageBoxButtons.OK);
+                            dataGridViewTakeOverRepair["garantie", e.RowIndex].Value = true;
+
+                            // ajouter la ligne de garantie
+                            string marqueText = dataGridViewTakeOverRepair["marque", e.RowIndex].Value as string;
+                            string modeleText = dataGridViewTakeOverRepair["modele", e.RowIndex].Value as string;
+                            string typeText =
+                                !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + (dataGridViewTakeOverRepair["type", e.RowIndex].Value as string) :
+                                !string.IsNullOrWhiteSpace(marqueText) && string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + (dataGridViewTakeOverRepair["type", e.RowIndex].Value as string) :
+                                (dataGridViewTakeOverRepair["type", e.RowIndex].Value as string);
+                            GarantiesTemp.Add(new Garantie(tabName: "Réparation", id: id, productName: typeText, months: null, option: null));
                         }
                     }
                 }
@@ -2410,44 +2180,66 @@ namespace MobileExpress
                 int currentColumnIndex = dataGridViewTakeOverRepair.CurrentCell.ColumnIndex;
                 int currentRowIndex = dataGridViewTakeOverRepair.CurrentCell.RowIndex;
 
-                if (currentColumnIndex >= 0 && currentRowIndex >= 0)
+                if (0 <= currentRowIndex && currentRowIndex < dataGridViewTakeOverRepair.Rows.Count &&
+                    0 <= currentColumnIndex && currentColumnIndex < dataGridViewTakeOverRepair.Columns.Count)
                 {
-                    if (e.Control is DataGridViewTextBoxEditingControl textBox && textBox != null)
+                    int id = (dataGridViewTakeOverRepair["id", currentRowIndex].Value as int?).Value;
+                    DataGridViewTextBoxEditingControl textBox = (DataGridViewTextBoxEditingControl)e.Control;
+                    DataGridViewTextBoxEditingControl textBoxEditingControl = (sender as DataGridView).EditingControl as DataGridViewTextBoxEditingControl;
+
+                    if (textBox != null)
                     {
-                        if (currentColumnIndex == dataGridViewTakeOverRepair.Columns["textBoxTakeOverRepairMarque"].Index)
+                        if (currentColumnIndex == dataGridViewTakeOverRepair["marque", currentRowIndex].ColumnIndex)
                         {
                             // Créez et initialisez votre source de données pour l'auto-complétion
                             AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
                             autoCompleteData.AddRange(MarquesDS.Select(x => x.Name).ToArray());
 
                             // Définissez la source de données de l'auto-complétion pour le TextBox
+                            textBox.Clear();
                             textBox.AutoCompleteCustomSource = autoCompleteData;
                             textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
                             textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
                         }
-                        else if (currentColumnIndex == dataGridViewTakeOverRepair.Columns["textBoxTakeOverRepairModele"].Index)
+                        if (currentColumnIndex == dataGridViewTakeOverRepair["modele", currentRowIndex].ColumnIndex)
                         {
-                            DataGridViewTextBoxCell marqueTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[currentRowIndex].Cells["textBoxTakeOverRepairMarque"];
-                            Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name, marqueTextBoxCell?.Value as string) == 0);
-
                             // Créez et initialisez votre source de données pour l'auto-complétion
                             AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                            autoCompleteData.AddRange((marque != null ? ModelesDS.Where(x => x.MarqueId == marque.Id) : ModelesDS).Select(x => x.Name).ToArray());
+
+                            string marqueName = dataGridViewTakeOverRepair["marque", currentRowIndex].Value as string;
+                            Marque marque = null;
+                            if (!string.IsNullOrWhiteSpace(marqueName))
+                            {
+                                marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
+                                autoCompleteData.AddRange(ModelesDS.Where(x => x.MarqueId == marque.Id).Select(x => x.Name).ToArray());
+                            }
+                            else
+                            {
+                                MessageBox.Show("Aucune marque n'a été saisie. Veuillez en saisir une.", "Alerte", MessageBoxButtons.OK);
+                                return;
+                            }
+
+                            if (autoCompleteData.Count == 0)
+                            {
+                                autoCompleteData.AddRange(ModelesDS.Select(x => x.Name).ToArray());
+                            }
 
                             // Définissez la source de données de l'auto-complétion pour le TextBox
+                            textBox.Clear();
                             textBox.AutoCompleteCustomSource = autoCompleteData;
                             textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
                             textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
                         }
-                        else if (currentColumnIndex == dataGridViewTakeOverRepair.Columns["textBoxTakeOverRepairType"].Index)
+                        if (currentColumnIndex == dataGridViewTakeOverRepair["type", currentRowIndex].ColumnIndex)
                         {
                             // Créez et initialisez votre source de données pour l'auto-complétion
                             AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                            var repairTypes = TakeOverTypesDS.Find(x => x.Id == 0).RepairTypes;
+                            List<RepairType> repairTypes = TakeOverTypesDS.Find(x => x.Id == 0).RepairTypes;
 
                             autoCompleteData.AddRange(repairTypes.Select(x => x.Name).ToArray());
 
                             // Définissez la source de données de l'auto-complétion pour le TextBox
+                            textBox.Clear();
                             textBox.AutoCompleteCustomSource = autoCompleteData;
                             textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
                             textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
@@ -2460,21 +2252,16 @@ namespace MobileExpress
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
-        private decimal repairOriginalValue;
         private void DataGridViewTakeOverRepair_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverRepair.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverRepair.Columns.Count)
                 {
-                    if (!(dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["textBoxTakeOverRepairId"].Value as int?).HasValue)
+                    if (!(dataGridViewTakeOverRepair["id", e.RowIndex].Value as int?).HasValue)
                     {
-                        int newId = GetItemId();
-                        dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["textBoxTakeOverRepairId"].Value = newId;
-                    }
-                    else if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverRepair.Columns["textBoxTakeOverRepairPrice"].Index)
-                    {
-                        repairOriginalValue = (dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as decimal?).Value;
+                        dataGridViewTakeOverRepair["id", e.RowIndex].Value = GetItemId();
                     }
                 }
             }
@@ -2487,22 +2274,22 @@ namespace MobileExpress
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverRepair.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverRepair.Columns.Count &&
+                    !dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow &&
+                    (dataGridViewTakeOverRepair["id", e.RowIndex].Value as int?).HasValue)
                 {
-                    if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverRepair.Columns["textBoxTakeOverRepairPrice"].Index)
+                    int id = (dataGridViewTakeOverRepair["id", e.RowIndex].Value as int?).Value;
+
+                    if (e.ColumnIndex == dataGridViewTakeOverRepair["price", e.RowIndex].ColumnIndex)
                     {
-                        decimal newValue = (dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as decimal?).Value;
-                        if (!decimal.Equals(repairOriginalValue, newValue))
-                        {
-                            UpdateTotalPrice(0, e.RowIndex, newValue, repairOriginalValue);
-                        }
+                        UpdateTotalPrice();
                     }
-                    if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverRepair.Columns["textBoxTakeOverRepairMarque"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverRepair["marque", e.RowIndex].ColumnIndex)
                     {
-                        string marqueName = dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as string;
+                        string marqueName = dataGridViewTakeOverRepair["marque", e.RowIndex].Value as string;
                         if (!string.IsNullOrWhiteSpace(marqueName))
                         {
-                            DataGridViewTextBoxEditingControl textBoxEditingControl = (sender as DataGridView).EditingControl as DataGridViewTextBoxEditingControl;
                             Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
                             if (marque == null)
                             {
@@ -2512,29 +2299,23 @@ namespace MobileExpress
                                 {
                                     MarquesDS.Add(marque);
                                     Tools.WriteLineTofile($"{marque.Id};{marque.Name}", Paths.MarquesDSPath, true);
-
-                                    // initialisez votre source de données pour l'auto-complétion
-                                    AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                                    autoCompleteData.AddRange(MarquesDS.Select(x => x.Name).ToArray());
-                                    textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
                                 }
                             }
                         }
                     }
-                    if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverRepair.Columns["textBoxTakeOverRepairModele"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverRepair["modele", e.RowIndex].ColumnIndex)
                     {
-                        string modeleName = dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as string;
+                        string modeleName = dataGridViewTakeOverRepair["modele", e.RowIndex].Value as string;
                         if (!string.IsNullOrWhiteSpace(modeleName))
                         {
-                            DataGridViewTextBoxEditingControl textBoxEditingControl = (sender as DataGridView).EditingControl as DataGridViewTextBoxEditingControl;
                             Modele modele = ModelesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), modeleName.ToLower()) == 0);
                             if (modele == null)
                             {
-                                DataGridViewTextBoxCell marqueTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["textBoxTakeOverRepairMarque"];
+                                string marqueName = dataGridViewTakeOverRepair["marque", e.RowIndex].Value as string;
                                 Marque marque = null;
-                                if (marqueTextBoxCell != null && !string.IsNullOrWhiteSpace(marqueTextBoxCell.Value as string))
+                                if (!string.IsNullOrWhiteSpace(marqueName))
                                 {
-                                    marque = MarquesDS.First(x => string.Compare(x.Name.ToLower(), (marqueTextBoxCell.Value as string).ToLower()) == 0);
+                                    marque = MarquesDS.First(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
                                 }
                                 else
                                 {
@@ -2548,22 +2329,15 @@ namespace MobileExpress
                                 {
                                     ModelesDS.Add(modele);
                                     Tools.WriteLineTofile($"{modele.Id};{modele.MarqueId};{modele.Name}", Paths.ModelesDSPath, true);
-
-                                    // initialisez votre source de données pour l'auto-complétion
-                                    AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                                    autoCompleteData.AddRange(ModelesDS.Select(x => x.Name).ToArray());
-                                    textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
                                 }
                             }
                         }
                     }
-                    if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverRepair.Columns["textBoxTakeOverRepairType"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverRepair["type", e.RowIndex].ColumnIndex)
                     {
-
-                        string typeName = dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as string;
+                        string typeName = dataGridViewTakeOverRepair["type", e.RowIndex].Value as string;
                         if (!string.IsNullOrWhiteSpace(typeName))
                         {
-                            DataGridViewTextBoxEditingControl textBoxEditingControl = (sender as DataGridView).EditingControl as DataGridViewTextBoxEditingControl;
                             RepairType repairType = TakeOverTypesDS.Find(x => x.Id == 0).RepairTypes.FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeName.ToLower()) == 0);
                             if (repairType == null)
                             {
@@ -2573,17 +2347,12 @@ namespace MobileExpress
                                 {
                                     TakeOverTypesDS.Find(x => x.Id == 0).RepairTypes.Add(repairType);
                                     Tools.WriteLineTofile($"{repairType.Id};{repairType.Name};{repairType.Price}", Paths.RepairTypesDSPath, true);
-
-                                    // initialisez votre source de données pour l'auto-complétion
-                                    AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                                    autoCompleteData.AddRange(TakeOverTypesDS.Find(x => x.Id == 0).RepairTypes.Select(x => x.Name).ToArray());
-                                    textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
                                 }
                             }
                             else
                             {
-                                dataGridViewTakeOverRepair.Rows[e.RowIndex].Cells["textBoxTakeOverRepairPrice"].Value = repairType.Price;
-                                UpdateTotalPrice(null, null, null, null);
+                                dataGridViewTakeOverRepair["price", e.RowIndex].Value = repairType.Price;
+                                UpdateTotalPrice();
                             }
                         }
                     }
@@ -2607,76 +2376,66 @@ namespace MobileExpress
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverUnlock.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverUnlock.Columns.Count &&
+                    !dataGridViewTakeOverUnlock.Rows[e.RowIndex].IsNewRow &&
+                    (dataGridViewTakeOverUnlock["id", e.RowIndex].Value as int?).HasValue)
                 {
-                    if (e.ColumnIndex == dataGridViewTakeOverUnlock.Columns["buttonTakeOverUnlockDeleteRow"].Index)
+                    int id = (dataGridViewTakeOverUnlock["id", e.RowIndex].Value as int?).Value;
+
+                    if (e.ColumnIndex == dataGridViewTakeOverUnlock["delete", e.RowIndex].ColumnIndex)
                     {
-                        // Suppression de la ligne
                         dataGridViewTakeOverUnlock.Rows.RemoveAt(e.RowIndex);
                     }
-                    else if (e.ColumnIndex == dataGridViewTakeOverUnlock.Columns["checkBoxTakeOverUnlockGarantie"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverUnlock["garantie", e.RowIndex].ColumnIndex)
                     {
-                        int? id = ((DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["textBoxTakeOverUnlockId"]).Value as int?;
-                        if (id.HasValue)
-                        {
-                            bool? isGarantie = (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["checkBoxTakeOverUnlockGarantie"]).Value as bool?;
-                            // si le click == coché : retirer la garantie
-                            if (isGarantie.HasValue && isGarantie.Value)
-                            {
-                                (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["checkBoxTakeOverUnlockGarantie"]).Value = false;
+                        bool isGarantie = (dataGridViewTakeOverUnlock["garantie", e.RowIndex].Value as bool?).HasValue ?
+                            (dataGridViewTakeOverUnlock["garantie", e.RowIndex].Value as bool?).Value : false;
 
-                                MEData oldMEData = MEDatasDS.FirstOrDefault(x => x.Id == id.Value);
-                                // si oldreceipt != null : c'est un ancien receipt
-                                // retirer la garantie de receipt
-                                if (oldMEData != null)
+                        // si le click == déjà coché : retirer la garantie
+                        if (isGarantie)
+                        {
+                            dataGridViewTakeOverUnlock["garantie", e.RowIndex].Value = false;
+
+                            MEData oldMEData = MEDatasDS.FirstOrDefault(x => x.Id == id);
+                            // si oldreceipt != null : c'est un ancien receipt
+                            // retirer la garantie de receipt
+                            if (oldMEData != null)
+                            {
+                                for (int i = 0; i < MEDatasDS.Count; i++)
                                 {
-                                    for (int i = 0; i < MEDatasDS.Count; i++)
+                                    if (MEDatasDS[i].Id == oldMEData.Id)
                                     {
-                                        if (MEDatasDS[i].Id == oldMEData.Id)
-                                        {
-                                            MEDatasDS[i].Garantie = null;
-                                            break;
-                                        }
-                                    }
-                                }
-                                // supprimer la ligne de garantie
-                                for (int i = 0; i < GarantiesTemp.Count; i++)
-                                {
-                                    if (id.Value == GarantiesTemp[i].Id)
-                                    {
-                                        GarantiesTemp.RemoveAt(i);
+                                        MEDatasDS[i].Garantie = null;
                                         break;
                                     }
                                 }
                             }
-                            // si le click == décoché : ajouter la garantie
-                            else if (!isGarantie.HasValue || !isGarantie.Value)
+                            // supprimer la ligne de garantie
+                            for (int i = 0; i < GarantiesTemp.Count; i++)
                             {
-                                (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["checkBoxTakeOverUnlockGarantie"]).Value = true;
-                                // ajouter la ligne de garantie
-                                string marqueText = (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["textBoxTakeOverUnlockMarque"]).Value as string;
-                                string modeleText = (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["textBoxTakeOverUnlockModele"]).Value as string;
-                                string typeText = (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["textBoxTakeOverUnlockType"]).Value as string;
-
-                                string productName = typeText;
-                                if (!string.IsNullOrWhiteSpace(marqueText))
+                                if (id == GarantiesTemp[i].Id)
                                 {
-                                    if (!string.IsNullOrWhiteSpace(modeleText))
-                                    {
-                                        productName = marqueText + " " + modeleText + " - " + productName;
-                                    }
-                                    else
-                                    {
-                                        productName = marqueText + " - " + productName;
-                                    }
+                                    GarantiesTemp.RemoveAt(i);
+                                    break;
                                 }
-
-                                GarantiesTemp.Add(new Garantie(tabName: "Déblocage", id: id.Value, productName: productName, months: null));
                             }
                         }
-                        else
+                        // si le click == décoché : ajouter la garantie
+                        else if (!isGarantie)
                         {
-                            MessageBox.Show("Assurez-vous d'avoir renseigné un produit.", "Alerte", MessageBoxButtons.OK);
+                            dataGridViewTakeOverUnlock["garantie", e.RowIndex].Value = true;
+
+                            // ajouter la ligne de garantie
+                            string marqueText = dataGridViewTakeOverUnlock["marque", e.RowIndex].Value as string;
+                            string modeleText = dataGridViewTakeOverUnlock["modele", e.RowIndex].Value as string;
+                            string typeText = dataGridViewTakeOverUnlock["type", e.RowIndex].Value as string;
+
+                            string productName =
+                                !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + typeText :
+                                !string.IsNullOrWhiteSpace(marqueText) && string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + typeText :
+                                typeText;
+                            GarantiesTemp.Add(new Garantie(tabName: "Déblocage", id: id, productName: productName, months: null, option: null));
                         }
                     }
                 }
@@ -2693,15 +2452,15 @@ namespace MobileExpress
                 int currentColumnIndex = dataGridViewTakeOverUnlock.CurrentCell.ColumnIndex;
                 int currentRowIndex = dataGridViewTakeOverUnlock.CurrentCell.RowIndex;
 
-                if (currentColumnIndex >= 0 && currentRowIndex >= 0)
+                if (0 <= currentRowIndex && currentRowIndex < dataGridViewTakeOverUnlock.Rows.Count &&
+                    0 <= currentColumnIndex && currentColumnIndex < dataGridViewTakeOverUnlock.Columns.Count)
                 {
-                    if (currentColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockPrice"].Index)
+                    int id = (dataGridViewTakeOverUnlock["id", currentRowIndex].Value as int?).Value;
+                    DataGridViewTextBoxEditingControl textBox = (DataGridViewTextBoxEditingControl)e.Control;
+
+                    if (textBox != null)
                     {
-                        UpdateTotalPrice(null, null, null, null);
-                    }
-                    else if (e.Control is DataGridViewTextBoxEditingControl textBox && textBox != null)
-                    {
-                        if (currentColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockMarque"].Index)
+                        if (currentColumnIndex == dataGridViewTakeOverUnlock["marque", currentRowIndex].ColumnIndex)
                         {
                             // Créez et initialisez votre source de données pour l'auto-complétion
                             AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
@@ -2712,27 +2471,41 @@ namespace MobileExpress
                             textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
                             textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
                         }
-                        else if (currentColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockModele"].Index)
+                        if (currentColumnIndex == dataGridViewTakeOverUnlock["modele", currentRowIndex].ColumnIndex)
                         {
-                            DataGridViewTextBoxCell marqueTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[currentRowIndex].Cells["textBoxTakeOverUnlockMarque"];
-                            Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name, marqueTextBoxCell?.Value as string) == 0);
-
                             // Créez et initialisez votre source de données pour l'auto-complétion
                             AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                            autoCompleteData.AddRange((marque != null ? ModelesDS.Where(x => x.MarqueId == marque.Id) : ModelesDS).Select(x => x.Name).ToArray());
+
+                            string marqueName = dataGridViewTakeOverUnlock["marque", currentRowIndex].Value as string;
+                            Marque marque = null;
+                            if (!string.IsNullOrWhiteSpace(marqueName))
+                            {
+                                marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
+                                autoCompleteData.AddRange(ModelesDS.Where(x => x.MarqueId == marque.Id).Select(x => x.Name).ToArray());
+                            }
+                            else
+                            {
+                                MessageBox.Show("Aucune marque n'a été saisie. Veuillez en saisir une.", "Alerte", MessageBoxButtons.OK);
+                                return;
+                            }
+
+                            if (autoCompleteData.Count == 0)
+                            {
+                                autoCompleteData.AddRange(ModelesDS.Select(x => x.Name).ToArray());
+                            }
 
                             // Définissez la source de données de l'auto-complétion pour le TextBox
                             textBox.AutoCompleteCustomSource = autoCompleteData;
                             textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
                             textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
                         }
-                        else if (currentColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockType"].Index)
+                        if (currentColumnIndex == dataGridViewTakeOverUnlock["type", currentRowIndex].ColumnIndex)
                         {
                             // Créez et initialisez votre source de données pour l'auto-complétion
                             AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                            var UnlockTypes = TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes;
+                            List<UnlockType> unlockTypes = TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes;
 
-                            autoCompleteData.AddRange(UnlockTypes.Select(x => x.Name).ToArray());
+                            autoCompleteData.AddRange(unlockTypes.Select(x => x.Name).ToArray());
 
                             // Définissez la source de données de l'auto-complétion pour le TextBox
                             textBox.AutoCompleteCustomSource = autoCompleteData;
@@ -2747,21 +2520,16 @@ namespace MobileExpress
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
-        private decimal unlockOriginalValue;
         private void DataGridViewTakeOverUnlock_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverUnlock.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverUnlock.Columns.Count)
                 {
-                    if (!(dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["textBoxTakeOverUnlockId"].Value as int?).HasValue)
+                    if (!(dataGridViewTakeOverUnlock["id", e.RowIndex].Value as int?).HasValue)
                     {
-                        int newId = GetItemId();
-                        dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["textBoxTakeOverUnlockId"].Value = newId;
-                    }
-                    else if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockPrice"].Index)
-                    {
-                        unlockOriginalValue = (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as decimal?).Value;
+                        dataGridViewTakeOverUnlock["id", e.RowIndex].Value = GetItemId();
                     }
                 }
             }
@@ -2774,24 +2542,24 @@ namespace MobileExpress
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverUnlock.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverUnlock.Columns.Count &&
+                    !dataGridViewTakeOverUnlock.Rows[e.RowIndex].IsNewRow &&
+                    (dataGridViewTakeOverUnlock["id", e.RowIndex].Value as int?).HasValue)
                 {
-                    if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockPrice"].Index)
+                    int id = (dataGridViewTakeOverUnlock["id", e.RowIndex].Value as int?).Value;
+
+                    if (e.ColumnIndex == dataGridViewTakeOverUnlock["price", e.RowIndex].ColumnIndex)
                     {
-                        decimal newValue = (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as decimal?).Value;
-                        if (!decimal.Equals(unlockOriginalValue, newValue))
-                        {
-                            UpdateTotalPrice(2, e.RowIndex, newValue, unlockOriginalValue);
-                        }
+                        UpdateTotalPrice();
                     }
-                    if (!dataGridViewTakeOverUnlock.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockMarque"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverUnlock["marque", e.RowIndex].ColumnIndex)
                     {
-                        DataGridViewTextBoxEditingControl textBoxEditingControl = (sender as DataGridView).EditingControl as DataGridViewTextBoxEditingControl;
-                        Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), (dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as string).ToLower()) == 0);
-                        if (marque == null)
+                        string marqueName = dataGridViewTakeOverUnlock["marque", e.RowIndex].Value as string;
+                        if (!string.IsNullOrWhiteSpace(marqueName))
                         {
-                            string marqueName = dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as string;
-                            if (!string.IsNullOrWhiteSpace(marqueName))
+                            Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
+                            if (marque == null)
                             {
                                 marque = new Marque(MarquesDS.OrderByDescending(x => x.Id).First().Id + 1, char.ToUpper(marqueName[0]) + marqueName.Substring(1));
                                 DialogResult result = MessageBox.Show($"La marque \"{marqueName}\" n'est pas connue du système. Voulez-vous l'ajouter ?", "Information", MessageBoxButtons.YesNo);
@@ -2799,29 +2567,23 @@ namespace MobileExpress
                                 {
                                     MarquesDS.Add(marque);
                                     Tools.WriteLineTofile($"{marque.Id};{marque.Name}", Paths.MarquesDSPath, true);
-
-                                    // initialisez votre source de données pour l'auto-complétion
-                                    AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                                    autoCompleteData.AddRange(MarquesDS.Select(x => x.Name).ToArray());
-                                    textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
                                 }
                             }
                         }
                     }
-                    if (!dataGridViewTakeOverUnlock.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockModele"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverUnlock["modele", e.RowIndex].ColumnIndex)
                     {
-                        string modeleName = dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as string;
+                        string modeleName = dataGridViewTakeOverUnlock["modele", e.RowIndex].Value as string;
                         if (!string.IsNullOrWhiteSpace(modeleName))
                         {
-                            DataGridViewTextBoxEditingControl textBoxEditingControl = (sender as DataGridView).EditingControl as DataGridViewTextBoxEditingControl;
                             Modele modele = ModelesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), modeleName.ToLower()) == 0);
                             if (modele == null)
                             {
-                                DataGridViewTextBoxCell marqueTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["textBoxTakeOverRepairMarque"];
+                                string marqueName = dataGridViewTakeOverUnlock["marque", e.RowIndex].Value as string;
                                 Marque marque = null;
-                                if (marqueTextBoxCell != null && !string.IsNullOrWhiteSpace(marqueTextBoxCell.Value as string))
+                                if (!string.IsNullOrWhiteSpace(marqueName))
                                 {
-                                    marque = MarquesDS.First(x => string.Compare(x.Name.ToLower(), (marqueTextBoxCell.Value as string).ToLower()) == 0);
+                                    marque = MarquesDS.First(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
                                 }
                                 else
                                 {
@@ -2835,42 +2597,30 @@ namespace MobileExpress
                                 {
                                     ModelesDS.Add(modele);
                                     Tools.WriteLineTofile($"{modele.Id};{modele.MarqueId};{modele.Name}", Paths.ModelesDSPath, true);
-
-                                    // initialisez votre source de données pour l'auto-complétion
-                                    AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                                    autoCompleteData.AddRange(ModelesDS.Select(x => x.Name).ToArray());
-                                    textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
                                 }
                             }
                         }
                     }
-                    if (!dataGridViewTakeOverUnlock.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverUnlock.Columns["textBoxTakeOverUnlockType"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverUnlock["type", e.RowIndex].ColumnIndex)
                     {
-                        string typeName = dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as string;
+                        string typeName = dataGridViewTakeOverUnlock["type", e.RowIndex].Value as string;
                         if (!string.IsNullOrWhiteSpace(typeName))
                         {
-                            DataGridViewTextBoxEditingControl textBoxEditingControl = (sender as DataGridView).EditingControl as DataGridViewTextBoxEditingControl;
-                            UnlockType UnlockType = TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes.FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeName.ToLower()) == 0);
-                            if (UnlockType == null)
+                            UnlockType unlockType = TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes.FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeName.ToLower()) == 0);
+                            if (unlockType == null)
                             {
-                                UnlockType = new UnlockType(TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes.OrderByDescending(x => x.Id).First().Id + 1, char.ToUpper(typeName[0]) + typeName.Substring(1), 0);
-
-                                DialogResult result = MessageBox.Show($"Le déblocage \"{typeName}\" n'est pas connue du système. Voullez-vous l'ajouter ?", "Information", MessageBoxButtons.YesNo);
+                                unlockType = new UnlockType(TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes.OrderByDescending(x => x.Id).First().Id + 1, char.ToUpper(typeName[0]) + typeName.Substring(1), 0);
+                                DialogResult result = MessageBox.Show($"Le déblocage \"{typeName}\" n'est pas connue du système. Voulez-vous l'ajouter ?", "Information", MessageBoxButtons.YesNo);
                                 if (result == DialogResult.Yes)
                                 {
-                                    TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes.Add(UnlockType);
-                                    Tools.WriteLineTofile($"{UnlockType.Id};{UnlockType.Name};{UnlockType.Price}", Paths.MarquesDSPath, true);
-
-                                    // initialisez votre source de données pour l'auto-complétion
-                                    AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                                    autoCompleteData.AddRange(TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes.Select(x => x.Name).ToArray());
-                                    textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
+                                    TakeOverTypesDS.Find(x => x.Id == 1).UnlockTypes.Add(unlockType);
+                                    Tools.WriteLineTofile($"{unlockType.Id};{unlockType.Name};{unlockType.Price}", Paths.UnlockTypesDSPath, true);
                                 }
                             }
                             else
                             {
-                                dataGridViewTakeOverUnlock.Rows[e.RowIndex].Cells["textBoxTakeOverUnlockPrice"].Value = UnlockType.Price;
-                                UpdateTotalPrice(null, null, null, null);
+                                dataGridViewTakeOverUnlock["price", e.RowIndex].Value = unlockType.Price;
+                                UpdateTotalPrice();
                             }
                         }
                     }
@@ -2894,139 +2644,111 @@ namespace MobileExpress
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverAchat.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverAchat.Columns.Count &&
+                    !dataGridViewTakeOverAchat.Rows[e.RowIndex].IsNewRow &&
+                    (dataGridViewTakeOverAchat["id", e.RowIndex].Value as int?).HasValue)
                 {
-                    if (e.ColumnIndex == dataGridViewTakeOverAchat.Columns["buttonTakeOverAchatDeleteRow"].Index)
+                    int id = (dataGridViewTakeOverAchat["id", e.RowIndex].Value as int?).Value;
+
+                    if (e.ColumnIndex == dataGridViewTakeOverAchat["delete", e.RowIndex].ColumnIndex)
                     {
-                        // Suppression de la ligne
                         dataGridViewTakeOverAchat.Rows.RemoveAt(e.RowIndex);
                     }
-                    else if (e.ColumnIndex == dataGridViewTakeOverAchat.Columns["checkBoxTakeOverAchatGarantie"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverAchat["garantie", e.RowIndex].ColumnIndex)
                     {
-                        int? id = ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatId"]).Value as int?;
-                        if (id.HasValue)
+                        bool isGarantie = (dataGridViewTakeOverAchat["garantie", e.RowIndex].Value as bool?).HasValue ?
+                            (dataGridViewTakeOverAchat["garantie", e.RowIndex].Value as bool?).Value : false;
+
+                        // si le click == déjà coché : retirer la garantie
+                        if (isGarantie)
                         {
-                            bool? isGarantie = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["checkBoxTakeOverAchatGarantie"]).Value as bool?;
-                            // si le click == coché : retirer la garantie
-                            if (isGarantie.HasValue && isGarantie.Value)
+                            dataGridViewTakeOverAchat["garantie", e.RowIndex].Value = false;
+
+                            MEData oldMEData = MEDatasDS.FirstOrDefault(x => x.Id == id);
+                            // si oldreceipt != null : c'est un ancien receipt
+                            // retirer la garantie de receipt
+                            if (oldMEData != null)
                             {
-                                (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["checkBoxTakeOverAchatGarantie"]).Value = false;
-                                MEData oldMEData = MEDatasDS.FirstOrDefault(x => x.Id == id.Value);
-                                // si oldreceipt != null : c'est un ancien receipt
-                                // retirer la garantie de receipt
-                                if (oldMEData != null)
+                                for (int i = 0; i < MEDatasDS.Count; i++)
                                 {
-                                    for (int i = 0; i < MEDatasDS.Count; i++)
+                                    if (MEDatasDS[i].Id == oldMEData.Id)
                                     {
-                                        if (MEDatasDS[i].Id == oldMEData.Id)
-                                        {
-                                            MEDatasDS[i].Garantie = null;
-                                            break;
-                                        }
-                                    }
-                                }
-                                // supprimer la ligne de garantie
-                                for (int i = 0; i < GarantiesTemp.Count; i++)
-                                {
-                                    if (id.Value == GarantiesTemp[i].Id)
-                                    {
-                                        GarantiesTemp.RemoveAt(i);
+                                        MEDatasDS[i].Garantie = null;
                                         break;
                                     }
                                 }
                             }
-                            // si le click == décoché : ajouter la garantie
-                            else if (!isGarantie.HasValue || !isGarantie.Value)
+                            // supprimer la ligne de garantie
+                            for (int i = 0; i < GarantiesTemp.Count; i++)
                             {
-                                (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["checkBoxTakeOverAchatGarantie"]).Value = true;
-                                // ajouter la ligne de garantie
-                                string marqueText = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatMarque"]).Value as string;
-                                string modeleText = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatModele"]).Value as string;
-                                string typeText = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatType"]).Value as string;
-
-                                string productName = typeText;
-                                if (!string.IsNullOrWhiteSpace(marqueText))
+                                if (id == GarantiesTemp[i].Id)
                                 {
-                                    if (!string.IsNullOrWhiteSpace(modeleText))
-                                    {
-                                        productName = marqueText + " " + modeleText + " - " + productName;
-                                    }
-                                    else
-                                    {
-                                        productName = marqueText + " - " + productName;
-                                    }
+                                    GarantiesTemp.RemoveAt(i);
+                                    break;
                                 }
-
-                                GarantiesTemp.Add(new Garantie(tabName: "Achat", id: id.Value, productName: productName, months: null));
                             }
                         }
-                        else
+                        // si le click == décoché : ajouter la garantie
+                        else if (!isGarantie)
                         {
-                            MessageBox.Show("Assurez-vous d'avoir renseigné un produit.", "Alerte", MessageBoxButtons.OK);
+                            dataGridViewTakeOverAchat["garantie", e.RowIndex].Value = true;
+
+                            // ajouter la ligne de garantie
+                            string marqueText = dataGridViewTakeOverAchat["marque", e.RowIndex].Value as string;
+                            string modeleText = dataGridViewTakeOverAchat["modele", e.RowIndex].Value as string;
+                            string productName =
+                                !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string) :
+                                !string.IsNullOrWhiteSpace(marqueText) && string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string) :
+                                (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string);
+                            GarantiesTemp.Add(new Garantie(tabName: "Déblocage", id: id, productName: productName, months: null, option: null));
                         }
                     }
-                    else if (e.ColumnIndex == dataGridViewTakeOverAchat.Columns["checkBoxTakeOverAchatRemise"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverAchat["remise", e.RowIndex].ColumnIndex)
                     {
-                        int? id = ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatId"]).Value as int?;
-                        if (id.HasValue)
+                        bool isRemise = (dataGridViewTakeOverAchat["remise", e.RowIndex].Value as bool?).HasValue ?
+                            (dataGridViewTakeOverAchat["remise", e.RowIndex].Value as bool?).Value : false;
+
+                        // si le click == cocher : retirer la remise
+                        if (isRemise)
                         {
-                            bool? isRemise = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["checkBoxTakeOverAchatRemise"]).Value as bool?;
-                            // si le click == cocher : retirer la remise
-                            if (isRemise.HasValue && isRemise.Value)
+                            dataGridViewTakeOverAchat["remise", e.RowIndex].Value = false;
+                            MEData oldMEData = MEDatasDS.FirstOrDefault(x => x.Id == id);
+                            // si oldreceipt != null : c'est un ancien receipt
+                            // retirer la remise de receipt
+                            if (oldMEData != null)
                             {
-                                (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["checkBoxTakeOverAchatRemise"]).Value = false;
-                                MEData oldMEData = MEDatasDS.FirstOrDefault(x => x.Id == id.Value);
-                                // si oldreceipt != null : c'est un ancien receipt
-                                // retirer la garantie de receipt
-                                if (oldMEData != null)
+                                for (int i = 0; i < MEDatasDS.Count; i++)
                                 {
-                                    for (int i = 0; i < MEDatasDS.Count; i++)
+                                    if (MEDatasDS[i].Id == oldMEData.Id)
                                     {
-                                        if (MEDatasDS[i].Id == oldMEData.Id)
-                                        {
-                                            MEDatasDS[i].Remise = null;
-                                            break;
-                                        }
-                                    }
-                                }
-                                // supprimer la ligne de remise
-                                for (int i = 0; i < RemisesTemp.Count; i++)
-                                {
-                                    if (id.Value == RemisesTemp[i].Id)
-                                    {
-                                        RemisesTemp.RemoveAt(i);
+                                        MEDatasDS[i].Remise = null;
                                         break;
                                     }
                                 }
                             }
-                            // si le click == décocher : ajouter la remise
-                            else if (!isRemise.HasValue || !isRemise.Value)
+                            // supprimer la ligne de remise
+                            for (int i = 0; i < RemisesTemp.Count; i++)
                             {
-                                (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["checkBoxTakeOverAchatRemise"]).Value = true;
-                                // ajouter la ligne de remise
-                                string marqueText = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatMarque"]).Value as string;
-                                string modeleText = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatModele"]).Value as string;
-                                string typeText = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatType"]).Value as string;
-
-                                string productName = typeText;
-                                if (!string.IsNullOrWhiteSpace(marqueText))
+                                if (id == RemisesTemp[i].Id)
                                 {
-                                    if (!string.IsNullOrWhiteSpace(modeleText))
-                                    {
-                                        productName = marqueText + " " + modeleText + " - " + productName;
-                                    }
-                                    else
-                                    {
-                                        productName = marqueText + " - " + productName;
-                                    }
+                                    RemisesTemp.RemoveAt(i);
+                                    break;
                                 }
-
-                                RemisesTemp.Add(new Remise(tabName: "Achat", id: id.Value, productName: productName, prix: null));
                             }
                         }
-                        else
+                        // si le click == décocher : ajouter la remise
+                        else if (!isRemise)
                         {
-                            MessageBox.Show("Assurez-vous d'avoir renseigné un produit.", "Alerte", MessageBoxButtons.OK);
+                            dataGridViewTakeOverAchat["remise", e.RowIndex].Value = true;
+                            // ajouter la ligne de remise
+                            string marqueText = dataGridViewTakeOverAchat["marque", e.RowIndex].Value as string;
+                            string modeleText = dataGridViewTakeOverAchat["modele", e.RowIndex].Value as string;
+                            string productName =
+                                !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string) :
+                                !string.IsNullOrWhiteSpace(marqueText) && string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string) :
+                                (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string);
+                            RemisesTemp.Add(new Remise(tabName: "Achat", id: id, productName: productName, prix: null));
                         }
                     }
                 }
@@ -3042,66 +2764,88 @@ namespace MobileExpress
             {
                 int currentColumnIndex = dataGridViewTakeOverAchat.CurrentCell.ColumnIndex;
                 int currentRowIndex = dataGridViewTakeOverAchat.CurrentCell.RowIndex;
-                if (currentColumnIndex >= 0 && currentRowIndex >= 0 && e.Control is DataGridViewTextBoxEditingControl textBoxEditingControl && textBoxEditingControl != null)
+
+                if (0 <= currentRowIndex && currentRowIndex < dataGridViewTakeOverAchat.Rows.Count &&
+                    0 <= currentColumnIndex && currentColumnIndex < dataGridViewTakeOverAchat.Columns.Count)
                 {
-                    if (currentColumnIndex == dataGridViewTakeOverAchat.Columns["textBoxTakeOverAchatMarque"].Index)
+                    int id = (dataGridViewTakeOverAchat["id", currentRowIndex].Value as int?).Value;
+                    DataGridViewTextBoxEditingControl textBox = (DataGridViewTextBoxEditingControl)e.Control;
+
+                    if (textBox != null)
                     {
-                        // Créez et initialisez votre source de données pour l'auto-complétion
-                        AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                        autoCompleteData.AddRange(MarquesDS.Select(x => x.Name).ToArray());
-
-                        // Définissez la source de données de l'auto-complétion pour le TextBox
-                        textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
-                        textBoxEditingControl.AutoCompleteMode = AutoCompleteMode.Suggest;
-                        textBoxEditingControl.AutoCompleteSource = AutoCompleteSource.CustomSource;
-                    }
-                    else if (currentColumnIndex == dataGridViewTakeOverAchat.Columns["textBoxTakeOverAchatModele"].Index)
-                    {
-                        DataGridViewTextBoxCell marqueTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[currentRowIndex].Cells["textBoxTakeOverAchatMarque"];
-                        Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name, marqueTextBoxCell?.Value as string) == 0);
-
-                        // Créez et initialisez votre source de données pour l'auto-complétion
-                        AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                        autoCompleteData.AddRange((marque != null ? ModelesDS.Where(x => x.MarqueId == marque.Id) : ModelesDS).Select(x => x.Name).ToArray());
-
-                        // Définissez la source de données de l'auto-complétion pour le TextBox
-                        textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
-                        textBoxEditingControl.AutoCompleteMode = AutoCompleteMode.Suggest;
-                        textBoxEditingControl.AutoCompleteSource = AutoCompleteSource.CustomSource;
-                    }
-                    else if (currentColumnIndex == dataGridViewTakeOverAchat.Columns["textBoxTakeOverAchatType"].Index)
-                    {
-                        DataGridViewTextBoxCell marqueTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[currentRowIndex].Cells["textBoxTakeOverAchatMarque"];
-                        Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name, marqueTextBoxCell?.Value as string) == 0);
-
-                        DataGridViewTextBoxCell modeleTextBoxCell = (DataGridViewTextBoxCell)dataGridViewTakeOverAchat.Rows[currentRowIndex].Cells["textBoxTakeOverAchatModele"];
-                        Modele modele = ModelesDS.FirstOrDefault(x => string.Compare(x.Name, modeleTextBoxCell?.Value as string) == 0);
-
-                        // Créez et initialisez votre source de données pour l'auto-complétion
-                        AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                        var articles = TakeOverTypesDS.Find(x => x.Id == 2).Articles;
-
-                        if (marque != null && modele != null)
+                        if (currentColumnIndex == dataGridViewTakeOverAchat["marque", currentRowIndex].ColumnIndex)
                         {
-                            autoCompleteData.AddRange(articles.Where(x => x.MarqueId == marque.Id && x.ModeleId == modele.Id).Select(x => x.Name).ToArray());
-                        }
-                        else if (marque != null)
-                        {
-                            autoCompleteData.AddRange(articles.Where(x => x.MarqueId == marque.Id).Select(x => x.Name).ToArray());
-                        }
-                        else if (modele != null)
-                        {
-                            autoCompleteData.AddRange(articles.Where(x => x.ModeleId == modele.Id).Select(x => x.Name).ToArray());
-                        }
-                        else
-                        {
-                            autoCompleteData.AddRange(articles.Select(x => x.Name).ToArray());
-                        }
+                            // Créez et initialisez votre source de données pour l'auto-complétion
+                            AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
+                            autoCompleteData.AddRange(MarquesDS.Select(x => x.Name).ToArray());
 
-                        // Définissez la source de données de l'auto-complétion pour le TextBox
-                        textBoxEditingControl.AutoCompleteCustomSource = autoCompleteData;
-                        textBoxEditingControl.AutoCompleteMode = AutoCompleteMode.Suggest;
-                        textBoxEditingControl.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                            // Définissez la source de données de l'auto-complétion pour le TextBox
+                            textBox.AutoCompleteCustomSource = autoCompleteData;
+                            textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
+                            textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                        }
+                        if (currentColumnIndex == dataGridViewTakeOverAchat["modele", currentRowIndex].ColumnIndex)
+                        {
+                            // Créez et initialisez votre source de données pour l'auto-complétion
+                            AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
+
+                            string marqueName = dataGridViewTakeOverAchat["marque", currentRowIndex].Value as string;
+                            Marque marque = null;
+                            if (!string.IsNullOrWhiteSpace(marqueName))
+                            {
+                                marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
+                                autoCompleteData.AddRange(ModelesDS.Where(x => x.MarqueId == marque.Id).Select(x => x.Name).ToArray());
+                            }
+                            else
+                            {
+                                MessageBox.Show("Aucune marque n'a été saisie. Veuillez en saisir une.", "Alerte", MessageBoxButtons.OK);
+                                return;
+                            }
+
+                            if (autoCompleteData.Count == 0)
+                            {
+                                autoCompleteData.AddRange(ModelesDS.Select(x => x.Name).ToArray());
+                            }
+
+                            // Définissez la source de données de l'auto-complétion pour le TextBox
+                            textBox.AutoCompleteCustomSource = autoCompleteData;
+                            textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
+                            textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                        }
+                        if (currentColumnIndex == dataGridViewTakeOverAchat["article", currentRowIndex].ColumnIndex)
+                        {
+                            // Créez et initialisez votre source de données pour l'auto-complétion
+                            AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
+                            List<Article> articles = TakeOverTypesDS.Find(x => x.Id == 2).Articles;
+
+                            string marqueName = dataGridViewTakeOverAchat["marque", currentRowIndex].Value as string;
+                            string modeleName = dataGridViewTakeOverAchat["modele", currentRowIndex].Value as string;
+                            string articleName = dataGridViewTakeOverAchat["article", currentRowIndex].Value as string;
+
+                            Marque marque = null;
+                            Modele modele = null;
+
+                            if (!string.IsNullOrWhiteSpace(marqueName) && !string.IsNullOrWhiteSpace(modeleName))
+                            {
+                                marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
+                                modele = ModelesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), modeleName.ToLower()) == 0);
+                                autoCompleteData.AddRange(articles.Where(x => x.MarqueId == marque.Id && x.ModeleId == modele.Id).Select(x => x.Name).ToArray());
+                            }
+                            else if (!string.IsNullOrWhiteSpace(marqueName) && string.IsNullOrWhiteSpace(modeleName))
+                            {
+                                marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
+                                autoCompleteData.AddRange(articles.Where(x => x.MarqueId == marque.Id).Select(x => x.Name).ToArray());
+                            }
+                            else if (string.IsNullOrWhiteSpace(marqueName) && string.IsNullOrWhiteSpace(modeleName))
+                            {
+                                autoCompleteData.AddRange(articles.Select(x => x.Name).ToArray());
+                            }
+
+                            // Définissez la source de données de l'auto-complétion pour le TextBox
+                            textBox.AutoCompleteCustomSource = autoCompleteData;
+                            textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
+                            textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                        }
                     }
                 }
             }
@@ -3110,21 +2854,16 @@ namespace MobileExpress
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
-        private decimal achatOriginalValue;
         private void DataGridViewTakeOverAchat_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverAchat.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverAchat.Columns.Count)
                 {
-                    if (!(dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatId"].Value as int?).HasValue)
+                    if (!(dataGridViewTakeOverAchat["id", e.RowIndex].Value as int?).HasValue)
                     {
-                        int newId = GetItemId();
-                        dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatId"].Value = newId;
-                    }
-                    else if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverAchat.Columns["textBoxTakeOverAchatPrice"].Index)
-                    {
-                        achatOriginalValue = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as decimal?).Value;
+                        dataGridViewTakeOverAchat["id", e.RowIndex].Value = GetItemId();
                     }
                 }
             }
@@ -3137,52 +2876,152 @@ namespace MobileExpress
         {
             try
             {
-                if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverAchat.Rows.Count &&
+                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverAchat.Columns.Count &&
+                    !dataGridViewTakeOverAchat.Rows[e.RowIndex].IsNewRow &&
+                    (dataGridViewTakeOverAchat["id", e.RowIndex].Value as int?).HasValue)
                 {
-                    if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverAchat.Columns["textBoxTakeOverAchatPrice"].Index)
+                    int id = (dataGridViewTakeOverAchat["id", e.RowIndex].Value as int?).Value;
+
+                    if (e.ColumnIndex == dataGridViewTakeOverAchat["price", e.ColumnIndex].RowIndex)
                     {
-                        decimal newValue = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as decimal?).Value;
-                        if (!decimal.Equals(achatOriginalValue, newValue))
+                        UpdateTotalPrice();
+                    }
+                    if (e.ColumnIndex == dataGridViewTakeOverAchat["marque", e.ColumnIndex].RowIndex)
+                    {
+                        string marqueName = dataGridViewTakeOverAchat["marque", e.RowIndex].Value as string;
+                        if (!string.IsNullOrWhiteSpace(marqueName))
                         {
-                            UpdateTotalPrice(2, e.RowIndex, newValue, achatOriginalValue);
+                            Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
+                            if (marque == null)
+                            {
+                                marque = new Marque(MarquesDS.OrderByDescending(x => x.Id).First().Id + 1, char.ToUpper(marqueName[0]) + marqueName.Substring(1));
+                                DialogResult result = MessageBox.Show($"La marque \"{marqueName}\" n'est pas connue du système. Voulez-vous l'ajouter ?", "Information", MessageBoxButtons.YesNo);
+                                if (result == DialogResult.Yes)
+                                {
+                                    MarquesDS.Add(marque);
+                                    Tools.WriteLineTofile($"{marque.Id};{marque.Name}", Paths.MarquesDSPath, true);
+                                }
+                            }
                         }
                     }
-                    if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverAchat.Columns["textBoxTakeOverAchatType"].Index)
+                    if (e.ColumnIndex == dataGridViewTakeOverAchat["modele", e.ColumnIndex].RowIndex)
                     {
-                        string articleName = dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells[e.ColumnIndex].Value as string;
+                        string modeleName = dataGridViewTakeOverAchat["modele", e.RowIndex].Value as string;
+                        if (!string.IsNullOrWhiteSpace(modeleName))
+                        {
+                            Modele modele = ModelesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), modeleName.ToLower()) == 0);
+                            if (modele == null)
+                            {
+                                string marqueName = dataGridViewTakeOverAchat["marque", e.RowIndex].Value as string;
+                                Marque marque = null;
+                                if (!string.IsNullOrWhiteSpace(marqueName))
+                                {
+                                    marque = MarquesDS.First(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Pour ajouter un nouveau modèle, assurez-vous d'avoir sélectionné une marque.", "Alerte");
+                                    return;
+                                }
+
+                                modele = new Modele(ModelesDS.OrderByDescending(x => x.Id).First().Id + 1, marque.Id, char.ToUpper(modeleName[0]) + modeleName.Substring(1));
+                                DialogResult result = MessageBox.Show($"Le modele \"{modeleName}\" n'est pas connue du système. Voulez-vous l'ajouter ?", "Information", MessageBoxButtons.YesNo);
+                                if (result == DialogResult.Yes)
+                                {
+                                    ModelesDS.Add(modele);
+                                    Tools.WriteLineTofile($"{modele.Id};{modele.MarqueId};{modele.Name}", Paths.ModelesDSPath, true);
+                                }
+                            }
+                        }
+                    }
+                    if (e.ColumnIndex == dataGridViewTakeOverAchat["article", e.ColumnIndex].RowIndex)
+                    {
+                        string articleName = dataGridViewTakeOverAchat["article", e.RowIndex].Value as string;
+
+                        Article article = null;
                         if (!string.IsNullOrWhiteSpace(articleName))
                         {
-                            Article article = TakeOverTypesDS.Find(x => x.Id == 2).Articles.FirstOrDefault(x => string.Compare(x.Name.ToLower(), articleName.ToLower()) == 0);
-                            dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatQuantity"].Value = 1;
-                            dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatPrice"].Value = article.Price;
-                            UpdateTotalPrice(null, null, null, null);
+                            article = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(x => string.Compare(x.Name.ToLower(), articleName.ToLower()) == 0);
                         }
-                    }
-                    if (!dataGridViewTakeOverRepair.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == dataGridViewTakeOverAchat.Columns["textBoxTakeOverAchatQuantity"].Index)
-                    {
-                        string marqueName = dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatMarque"].Value as string;
-                        string modeleName = dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatModele"].Value as string;
-                        string articleName = dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatType"].Value as string;
-                        Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
-                        Modele modele = ModelesDS.FirstOrDefault(x => x.MarqueId == marque.Id && string.Compare(x.Name.ToLower(), modeleName.ToLower()) == 0);
-                        Article article =
-                            TakeOverTypesDS.Find(x => x.Id == 2).Articles.FirstOrDefault(x => x.MarqueId == marque.Id && x.ModeleId == modele.Id && string.Compare(x.Name.ToLower(), articleName.ToLower()) == 0) ??
-                            TakeOverTypesDS.Find(x => x.Id == 2).Articles.FirstOrDefault(x => string.Compare(x.Name.ToLower(), articleName.ToLower()) == 0);
                         if (article == null)
                         {
-                            MessageBox.Show("L'article renseigné est introuvable. Veuillez créer un article dans l'onglet Stock.", "Alerte", MessageBoxButtons.OK);
-                            return;
-                        }
+                            using (ArticleForm dialog = new ArticleForm(StockAction.Achat, null, TakeOverTypesDS.First(x => x.Id == 2).Articles, MarquesDS, ModelesDS))
+                            {
+                                // Afficher la boîte de dialogue modale
+                                if (dialog.ShowDialog() == DialogResult.OK)
+                                {
+                                    (StockAction action, Article articleToBuy, List<Article> articles, List<Marque> marques, List<Modele> modeles) = dialog.GetResult();
+                                    TakeOverTypesDS.First(x => x.Id == 2).Articles = articles;
+                                    MarquesDS = marques;
+                                    ModelesDS = modeles;
+                                    if (action == StockAction.AchatAjout)
+                                    {
+                                        int oldQuantity = articleToBuy.Quantity;
+                                        articleToBuy.Quantity = 99;
+                                        StockUpdateDatabase(articleToBuy, -1);
+                                        articleToBuy.Quantity = oldQuantity;
+                                    }
+                                    Article articleToUpdate = TakeOverTypesDS.First(x => x.Id == 2).Articles.First(y => y.Id == articleToBuy.Id);
+                                    articleToUpdate.Quantity -= articleToBuy.Quantity;
 
-                        int quantity = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatQuantity"].Value as int?).Value;
-                        if (article.Quantity < quantity)
+                                    dataGridViewTakeOverAchat.Rows.Add();
+
+                                    // récupérer le dernier row index vide
+                                    int index = 0;
+                                    foreach (DataGridViewRow row in dataGridViewTakeOverAchat.Rows)
+                                    {
+                                        if (row.IsNewRow || !(row.Cells["id"].Value as int?).HasValue)
+                                            break;
+                                        index++;
+                                    }
+
+                                    // remplir dataGridViewTakeOverAchat.Rows[dernierRowIndexVide]
+                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["id", index]).Value = id;
+                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = id.ToString();
+
+                                    Marque marque = null;
+                                    if (articleToBuy.MarqueId.HasValue)
+                                    {
+                                        marque = MarquesDS.First(x => x.Id == articleToBuy.MarqueId.Value);
+                                    }
+                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["marque", index]).Value = marque?.Name ?? string.Empty;
+                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = marque?.Name ?? string.Empty;
+
+                                    Modele modele = null;
+                                    if (articleToBuy.ModeleId.HasValue)
+                                    {
+                                        modele = ModelesDS.First(x => x.Id == articleToBuy.ModeleId.Value);
+                                    }
+                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["modele", index]).Value = modele?.Name ?? string.Empty;
+                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = modele?.Name ?? string.Empty;
+
+                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["article", index]).Value = articleToBuy.Name;
+                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = articleToBuy.Name;
+
+                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["quantity", index]).Value = articleToBuy.Quantity;
+                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = articleToBuy.Quantity.ToString();
+
+                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["price", index]).Value = articleToBuy.Price;
+                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = articleToBuy.Price.ToString();
+
+                                    ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["garantie", index]).Value = false;
+
+                                    ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["remise", index]).Value = false;
+
+                                    UpdateTotalPrice();
+                                    StockUpdateDatabase(articleToUpdate, 0, false);
+                                }
+                            }
+                        }
+                        else
                         {
-                            dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatQuantity"].Value = article.Quantity;
-                            quantity = article.Quantity;
+                            dataGridViewTakeOverAchat["price", e.RowIndex].Value = article.Price;
+                            ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = article.Price.ToString();
+                            dataGridViewTakeOverAchat["quantity", e.RowIndex].Value = 1;
+                            ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = "1";
+                            UpdateTotalPrice();
                         }
-
-                        dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["textBoxTakeOverAchatPrice"].Value = quantity * article.Price;
-                        UpdateTotalPrice(null, null, null, null);
                     }
                 }
             }
@@ -3192,7 +3031,7 @@ namespace MobileExpress
             }
         }
         #endregion
-        private void UpdateTotalPrice(int? type, int? rowIndex, decimal? newPrice, decimal? oldPrice)
+        private void UpdateTotalPrice()
         {
             try
             {
@@ -3202,21 +3041,10 @@ namespace MobileExpress
                 {
                     if (!row.IsNewRow)
                     {
-                        if (type.HasValue && type.Value == 0 && rowIndex.Value == row.Index)
+                        decimal? price = row.Cells["price"].Value as decimal?;
+                        if (price.HasValue)
                         {
-                            if (oldPrice.HasValue)
-                            {
-                                totalPrice -= oldPrice.Value;
-                            }
-                            totalPrice += newPrice.Value;
-                        }
-                        else
-                        {
-                            decimal? price = row.Cells["textBoxTakeOverRepairPrice"].Value as decimal?;
-                            if (price != null)
-                            {
-                                totalPrice += price.Value;
-                            }
+                            totalPrice += price.Value;
                         }
                     }
                 }
@@ -3224,21 +3052,10 @@ namespace MobileExpress
                 {
                     if (!row.IsNewRow)
                     {
-                        if (type.HasValue && type.Value == 1 && rowIndex.Value == row.Index)
+                        decimal? price = row.Cells["price"].Value as decimal?;
+                        if (price.HasValue)
                         {
-                            if (oldPrice.HasValue)
-                            {
-                                totalPrice -= oldPrice.Value;
-                            }
-                            totalPrice += newPrice.Value;
-                        }
-                        else
-                        {
-                            decimal? price = row.Cells["textBoxTakeOverUnlockPrice"].Value as decimal?;
-                            if (price != null)
-                            {
-                                totalPrice += price.Value;
-                            }
+                            totalPrice += price.Value;
                         }
                     }
                 }
@@ -3246,28 +3063,17 @@ namespace MobileExpress
                 {
                     if (!row.IsNewRow)
                     {
-                        if (type.HasValue && type.Value == 2 && rowIndex.Value == row.Index)
+                        decimal? price = row.Cells["price"].Value as decimal?;
+                        int? quantity = row.Cells["quantity"].Value as int?;
+                        if (price.HasValue && quantity.HasValue)
                         {
-                            if (oldPrice.HasValue)
+                            bool? isRemise = row.Cells["remise"].Value as bool?;
+                            int? id = row.Cells["id"].Value as int?;
+                            if (isRemise.HasValue && isRemise.Value && id.HasValue && RemisesTemp.Any(x => x.Id == id.Value))
                             {
-                                totalPrice -= oldPrice.Value;
+                                remise += RemisesTemp.First(x => x.Id == id.Value).Prix.Value;
                             }
-                            totalPrice += newPrice.Value;
-                        }
-                        else
-                        {
-                            decimal? price = row.Cells["textBoxTakeOverAchatPrice"].Value as decimal?;
-                            int? quantity = row.Cells["textBoxTakeOverAchatQuantity"].Value as int?;
-                            if (price != null)
-                            {
-                                bool? isRemise = row.Cells["checkBoxTakeOverAchatRemise"].Value as bool?;
-                                int? id = row.Cells["textBoxTakeOverAchatId"].Value as int?;
-                                if (isRemise.HasValue && isRemise.Value && RemisesTemp.Any(x => x.Id == id.Value))
-                                {
-                                    remise += RemisesTemp.First(x => x.Id == id.Value).Prix.Value;
-                                }
-                                totalPrice += price.Value * quantity.Value;
-                            }
+                            totalPrice += price.Value * quantity.Value;
                         }
                     }
                 }
@@ -3294,25 +3100,25 @@ namespace MobileExpress
 
             foreach (DataGridViewRow row in dataGridViewTakeOverRepair.Rows)
             {
-                if ((row.Cells["textBoxTakeOverRepairId"].Value as int?).HasValue)
+                if ((row.Cells["id"].Value as int?).HasValue)
                 {
-                    int id = (row.Cells["textBoxTakeOverRepairId"].Value as int?).Value;
+                    int id = (row.Cells["id"].Value as int?).Value;
                     newId = id > newId ? id : newId;
                 }
             }
             foreach (DataGridViewRow row in dataGridViewTakeOverUnlock.Rows)
             {
-                if ((row.Cells["textBoxTakeOverUnlockId"].Value as int?).HasValue)
+                if ((row.Cells["id"].Value as int?).HasValue)
                 {
-                    int id = (row.Cells["textBoxTakeOverUnlockId"].Value as int?).Value;
+                    int id = (row.Cells["id"].Value as int?).Value;
                     newId = id > newId ? id : newId;
                 }
             }
             foreach (DataGridViewRow row in dataGridViewTakeOverAchat.Rows)
             {
-                if ((row.Cells["textBoxTakeOverAchatId"].Value as int?).HasValue)
+                if ((row.Cells["id"].Value as int?).HasValue)
                 {
-                    int id = (row.Cells["textBoxTakeOverAchatId"].Value as int?).Value;
+                    int id = (row.Cells["id"].Value as int?).Value;
                     newId = id > newId ? id : newId;
                 }
             }

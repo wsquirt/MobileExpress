@@ -181,6 +181,15 @@ namespace MobileExpress
                 ReadOnly = true,
             };
             dataGridViewHistorique.Columns.Add(garantie);
+            DataGridViewCheckBoxColumn garantieOption = new DataGridViewCheckBoxColumn()
+            {
+                HeaderText = "Option garantie",
+                Name = "checkBoxGarantieOption",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                Visible = true,
+                ReadOnly = false,
+            };
+            dataGridViewHistorique.Columns.Add(garantieOption);
             DataGridViewTextBoxColumn remise = new DataGridViewTextBoxColumn()
             {
                 HeaderText = "Remise",
@@ -366,6 +375,9 @@ namespace MobileExpress
                     {
                         garantieControl.Text = historique.Garantie;
                     }
+                    // 
+                    DataGridViewCheckBoxCell optionGarantie = (DataGridViewCheckBoxCell)dataGridViewHistorique.Rows[index].Cells["checkBoxGarantieOption"];
+                    optionGarantie.Value = historique.GarantieOption;
 
                     DataGridViewTextBoxCell remise = (DataGridViewTextBoxCell)dataGridViewHistorique.Rows[index].Cells["textBoxRemise"];
                     remise.Value = Tools.ToNullableDecimal(historique.Remise) ?? 0;
@@ -494,6 +506,7 @@ namespace MobileExpress
                         {
                             int? priseEnChargeId = (dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxPriseEnCharge"].Value as int?);
                             decimal? paid = dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxPaid"].Value as decimal?;
+                            decimal? accompte = dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxAccompte"].Value as decimal?;
                             decimal? total = dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxTotal"].Value as decimal?;
                             for (int i = 0; i < dataGridViewHistorique.RowCount; i++)
                             {
@@ -504,8 +517,8 @@ namespace MobileExpress
                                     dataGridViewHistorique.Rows[i].Cells["textBoxPaid"].Value = paid;
                                     dataGridViewHistorique.Text = paid.HasValue ? paid.Value.ToString() : "0";
 
-                                    dataGridViewHistorique.Rows[i].Cells["textBoxResteDu"].Value = (total ?? 0) - (paid ?? 0);
-                                    dataGridViewHistorique.Text = paid.HasValue && total.HasValue ? ((total ?? 0) - (paid ?? 0)).ToString() : "0";
+                                    dataGridViewHistorique.Rows[i].Cells["textBoxResteDu"].Value = (total ?? 0) - (paid ?? 0) - (accompte ?? 0);
+                                    dataGridViewHistorique.Text = paid.HasValue && total.HasValue ? ((total ?? 0) - (paid ?? 0) - (accompte ?? 0)).ToString() : "0";
                                 }
                             }
                         }
@@ -513,6 +526,7 @@ namespace MobileExpress
                         {
                             int? priseEnChargeId = (dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxPriseEnCharge"].Value as int?);
                             decimal? paid = dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxPaid"].Value as decimal?;
+                            decimal? accompte = dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxAccompte"].Value as decimal?;
                             decimal total = 0;
                             for (int i = 0; i < dataGridViewHistorique.RowCount; i++)
                             {
@@ -532,8 +546,8 @@ namespace MobileExpress
                                     priseEnChargeId.HasValue &&
                                     priseEnChargeId.Value == (dataGridViewHistorique.Rows[i].Cells["textBoxPriseEnCharge"].Value as int?).Value)
                                 {
-                                    dataGridViewHistorique.Rows[i].Cells["textBoxResteDu"].Value = total - (paid ?? 0);
-                                    dataGridViewHistorique.Text = paid.HasValue ? (total - (paid ?? 0)).ToString() : "0";
+                                    dataGridViewHistorique.Rows[i].Cells["textBoxResteDu"].Value = total - (paid ?? 0) - (accompte ?? 0);
+                                    dataGridViewHistorique.Text = paid.HasValue ? (total - (paid ?? 0) - (accompte ?? 0)).ToString() : "0";
 
                                     dataGridViewHistorique.Rows[i].Cells["textBoxTotal"].Value = total - (paid ?? 0);
                                     dataGridViewHistorique.Text = total.ToString();
@@ -544,6 +558,7 @@ namespace MobileExpress
                         {
                             int? priseEnChargeId = (dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxPriseEnCharge"].Value as int?);
                             decimal? paid = Tools.ToNullableDecimal(dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxPaid"].Value as string);
+                            decimal? accompte = dataGridViewHistorique.Rows[currentRowIndex].Cells["textBoxAccompte"].Value as decimal?;
                             decimal total = 0;
                             for (int i = 0; i < dataGridViewHistorique.RowCount; i++)
                             {
@@ -563,8 +578,8 @@ namespace MobileExpress
                                     priseEnChargeId.HasValue &&
                                     priseEnChargeId.Value == (dataGridViewHistorique.Rows[i].Cells["textBoxPriseEnCharge"].Value as int?).Value)
                                 {
-                                    dataGridViewHistorique.Rows[i].Cells["textBoxResteDu"].Value = total - (paid ?? 0);
-                                    dataGridViewHistorique.Text = paid.HasValue ? (total - (paid ?? 0)).ToString() : "0";
+                                    dataGridViewHistorique.Rows[i].Cells["textBoxResteDu"].Value = total - (paid ?? 0) - (accompte ?? 0);
+                                    dataGridViewHistorique.Text = paid.HasValue ? (total - (paid ?? 0) - (accompte ?? 0)).ToString() : "0";
 
                                     dataGridViewHistorique.Rows[i].Cells["textBoxTotal"].Value = total - (paid ?? 0);
                                     dataGridViewHistorique.Text = total.ToString();
@@ -605,6 +620,7 @@ namespace MobileExpress
                         int quantity = (row.Cells["textBoxQuantity"].Value as int?).Value;
                         decimal price = (row.Cells["textBoxPrice"].Value as decimal?) ?? 0;
                         int? monthsGarantie = (row.Cells["textBoxGarantie"].Value as string) == "Non" ? null : (int?)int.Parse((row.Cells["textBoxGarantie"].Value as string).Split(' ')[0]);
+                        bool optionGarantie = (row.Cells["checkBoxGarantieOption"].Value as bool?).Value;
                         decimal? remise = (row.Cells["textBoxRemise"].Value as decimal?) ?? 0;
                         decimal? accompte = (row.Cells["textBoxAccompte"].Value as decimal?) ?? 0;
                         decimal? resteDu = (row.Cells["textBoxResteDu"].Value as decimal?) ?? 0;
@@ -614,14 +630,14 @@ namespace MobileExpress
                         TakeOverState state = (row.Cells["comboBoxState"].Value as TakeOverState?).Value;
                         int id = (row.Cells["textBoxId"].Value as int?).Value;
                         bool verification = (row.Cells["checkBoxVerification"].Value as bool?).Value;
-                        
+
                         if (!priseEnChargeIds.Any(x => x == takeOverId))
                         {
                             priseEnChargeIds.Add(takeOverId);
                         }
                         mEDatas.Add(new MEData(
                         takeOverId, date, invoiceId, customerId, marqueId, modeleId, imei, repairTypeId, unlockTypeId, articleId,
-                        quantity, price, monthsGarantie, remise, accompte, resteDu, paid, total, paymentMode, state, id, verification));
+                        quantity, price, monthsGarantie, optionGarantie, remise, accompte, resteDu, paid, total, paymentMode, state, id, verification));
                     }
                 }
 
@@ -676,7 +692,7 @@ namespace MobileExpress
             {
                 List<MEData> mEDatas = MEDatasDS.Where(x => Historiques.FirstOrDefault(y => y.PriseEnCharge == x.TakeOverId) != null).ToList();
 
-                int invoiceId = MEDatasDS.OrderByDescending(x => x.InvoiceId ?? 0)?.FirstOrDefault()?.InvoiceId ?? 0;
+                int invoiceId = (MEDatasDS.OrderByDescending(x => x.InvoiceId ?? 0)?.FirstOrDefault()?.InvoiceId ?? 0) + 1;
                 using (GenerateInvoiceForm dialog = new GenerateInvoiceForm(mEDatas, Customer, MarquesDS, ModelesDS, TakeOversDS, invoiceId))
                 {
                     // Afficher la boîte de dialogue modale
@@ -723,7 +739,7 @@ namespace MobileExpress
                         string path = Paths.ReceiptDSPath;
 
                         List<string> items = new List<string>() { "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;Quantité;Prix;Garantie;Remise;Accompte;Reste dû;Payé;Total;Numéro de mode de paiement;Etat;Id;Vérification" };
-                        items.AddRange(MEDatasDS.Select(x => $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>((PaymentMode)x.PaymentMode)};{(int)x.State};{x.Id};{(x.Verification ? "Oui" : "Non")}"));
+                        items.AddRange(MEDatasDS.Select(x => $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};{x.Id};{(x.Verification ? "Oui" : "Non")}"));
                         Tools.RewriteDataToFile(items, path, false);
 
                         decimal payeAFacturer = factureACreer.First().Paid.Value;
@@ -799,31 +815,32 @@ namespace MobileExpress
                                 }
                             }
                         }
-                        DialogResult acccompteResult = MessageBox.Show($"Voulez-vous prendre en compte l'accompte de {accompteAFacturer.ToString()} versé ?", "Information", MessageBoxButtons.YesNo);
-                        if (acccompteResult == DialogResult.Yes)
+                        if (accompteAFacturer > 0)
                         {
-                            payeAFacturer += accompteAFacturer;
+                            DialogResult acccompteResult = MessageBox.Show($"Voulez-vous prendre en compte l'accompte de {accompteAFacturer.ToString()} versé ?", "Information", MessageBoxButtons.YesNo);
+                            if (acccompteResult == DialogResult.Yes)
+                            {
+                                payeAFacturer += accompteAFacturer;
+                            }
                         }
-                        (bool cb, bool espece, bool virement) = Tools.GetBoolFromPaymentMode(factureACreer.First().PaymentMode);
+                        string modeDePaiement = Tools.GetEnumDescriptionFromEnum<PaymentMode>(factureACreer.First().PaymentMode);
                         // générer pdf
                         string customerName = (
                             !string.IsNullOrWhiteSpace(Customer.LastName) && !string.IsNullOrWhiteSpace(Customer.FirstName) ? Customer.LastName + " " + Customer.FirstName :
                             !string.IsNullOrWhiteSpace(Customer.LastName) && string.IsNullOrWhiteSpace(Customer.FirstName) ? Customer.LastName :
                             Customer.FirstName);
                         string title = $@"Facture_{(invoiceId < 10 ? $"0{invoiceId}" : invoiceId.ToString())}_PriseEnCharge_{(factureACreer.First().TakeOverId < 10 ? $"0{factureACreer.First().TakeOverId}" : factureACreer.First().TakeOverId.ToString())}_{factureACreer.First().Date.ToString("ddMMyyyyHHmmss")}";
-                        Tools.GenerateDocx(
+                        Services.GenerateDocx(
                             type: 1,
                             logo: Paths.LogoPath,
                             customerName: (Customer.Sexe == Sexe.Femme ? $"Madame {customerName}" : Customer.Sexe == Sexe.Homme ? $"Monsieur {customerName}" : customerName),
                             customerPhone: Customer.PhoneNumber,
                             customerEmail: Customer.EmailAddress,
-                            takeOverDate: factureACreer.First().Date.ToString("dd/MM/yyyy"),
+                            takeOverDate: factureACreer.First().Date.ToString("dddd dd MMMM yyyy"),
                             takeOverNumber: factureACreer.First().TakeOverId.ToString(),
                             accompte: null,
                             paid: payeAFacturer,
-                            carteBleu: cb,
-                            espece: espece,
-                            virement: virement,
+                            modeDePaiement: modeDePaiement,
                             mEDatas: factureACreer,
                             path: $@"{Paths.FactureDirectory}\{title}.docx",
                             title: title,

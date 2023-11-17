@@ -250,7 +250,7 @@ namespace MobileExpress
                 }
                 string modeleName = textBoxModele.Text;
                 Modele modele = Modeles.FirstOrDefault(x => x.Name.ToLower() == modeleName.ToLower() && x.MarqueId == marque.Id);
-                if (modele == null)
+                if (modele == null && !string.IsNullOrWhiteSpace(modeleName))
                 {
                     modele = new Modele(Modeles.OrderByDescending(x => x.Id).First().Id + 1, marque.Id, char.ToUpper(modeleName[0]) + modeleName.Substring(1));
                     Modeles.Add(modele);
@@ -262,8 +262,8 @@ namespace MobileExpress
                 string gtin = textBoxGTIN.Text;
                 string isbn = textBoxISBN.Text;
                 string name = textBoxProduit.Text;
-                int marqueId = marque.Id;
-                int modeleId = modele.Id;
+                int? marqueId = marque?.Id;
+                int? modeleId = modele?.Id;
                 decimal prix = decimal.Parse(textBoxPrix.Text);
                 int quantity = int.Parse(textBoxQuantity.Text);
                 int id = int.Parse(labelArticleId.Text);
