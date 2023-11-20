@@ -1341,6 +1341,7 @@ namespace MobileExpress
         {
             try
             {
+                textBoxTakeOverLastName_Load(null);
                 using (CustomerForm dialog = new CustomerForm(null, CustomersDS))
                 {
                     // Afficher la boîte de dialogue modale
@@ -1372,6 +1373,7 @@ namespace MobileExpress
         {
             try
             {
+                textBoxTakeOverLastName_Load(null);
                 Customer customerToUpdate = CustomersDS.FirstOrDefault(x => x.Id == ((int?)comboBoxTakeOverCustomer.SelectedValue ?? 0));
                 if (customerToUpdate == null)
                 {

@@ -18,6 +18,12 @@ namespace MobileExpress
 
         public CustomerForm(Customer customer, List<Customer> customers)
         {
+            Lastname = string.Empty;
+            Firstname = string.Empty;
+            Phone = string.Empty;
+            Email = string.Empty;
+            Sexe = Sexe.Unknown;
+
             InitializeComponent();
 
             Customers = customers;
@@ -51,6 +57,15 @@ namespace MobileExpress
                 Firstname = textBox2.Text;
                 Phone = textBox3.Text;
                 Email = textBox4.Text;
+
+                if (Customers.Any(x =>
+                    x.PhoneNumber.Contains(Phone) ||
+                    (x.LastName.Contains(Lastname) && x.FirstName.Contains(Firstname)) ||
+                    x.LastName.Contains(Lastname) || x.FirstName.Contains(Firstname)))
+                {
+                    this.DialogResult = DialogResult.Cancel;
+                    this.Close();
+                }
 
                 string sexe = (string)comboBox1.SelectedItem;
                 if (!string.IsNullOrWhiteSpace(sexe))
