@@ -59,12 +59,17 @@ namespace MobileExpress
                 Email = textBox4.Text;
 
                 if (Customers.Any(x =>
-                    x.PhoneNumber.Contains(Phone) ||
-                    (x.LastName.Contains(Lastname) && x.FirstName.Contains(Firstname)) ||
-                    x.LastName.Contains(Lastname) || x.FirstName.Contains(Firstname)))
+                {
+                    bool isExistedCustomer =
+                        x.PhoneNumber.Contains(Phone) ||
+                        (x.LastName.ToLowerInvariant().Contains(Lastname.ToLowerInvariant()) && x.FirstName.ToLowerInvariant().Contains(Firstname.ToLowerInvariant())) ||
+                        x.LastName.ToLowerInvariant().Contains(Lastname.ToLowerInvariant()) || x.FirstName.ToLowerInvariant().Contains(Firstname.ToLowerInvariant());
+                    return isExistedCustomer;
+                }))
                 {
                     this.DialogResult = DialogResult.Cancel;
                     this.Close();
+                    return;
                 }
 
                 string sexe = (string)comboBox1.SelectedItem;
