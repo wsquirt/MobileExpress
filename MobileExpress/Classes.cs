@@ -1,5 +1,9 @@
-﻿using System;
+﻿using MobileExpress;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace MobileExpress
 {
@@ -40,6 +44,7 @@ namespace MobileExpress
     public class DocxArticle
     {
         public string Name { get; set; }
+        public string Panne { get; set; }
         public string Quantity { get; set; }
         public string Price { get; set; }
         public string Total { get; set; }
@@ -141,10 +146,10 @@ namespace MobileExpress
         public int? RepairTypeId;
         public int? UnlockTypeId;
         public int? ArticleId;
+        public string Displaytext;
         public int Quantity;
         public decimal? Price;
         public int? Garantie;
-        public bool? GarantieOption;
         public decimal? Remise;
         public decimal? Accompte;
         public decimal? ResteDu;
@@ -153,11 +158,13 @@ namespace MobileExpress
         public PaymentMode PaymentMode;
         public TakeOverState State;
         public bool Verification;
+        public bool OptionGarantie;
         public MEData(
             int takeOverId, DateTime date, int? invoiceId, int customerId, int? marqueId, int? modeleId,
-            string imei, int? repairTypeId, int? unlockTypeId, int? articleId, int quantity,
-            decimal? price, int? garantie, bool? garantieOption, decimal? remise, decimal? accompte, decimal? resteDu,
-            decimal? paid, decimal total, PaymentMode paymentMode, TakeOverState state, int id, bool verification)
+            string imei, int? repairTypeId, int? unlockTypeId, int? articleId, string displayText, int quantity,
+            decimal? price, int? garantie, decimal? remise, decimal? accompte, decimal? resteDu,
+            decimal? paid, decimal total, PaymentMode paymentMode, TakeOverState state, int id, bool verification,
+            bool optionGarantie)
         {
             TakeOverId = takeOverId;
             Date = date;
@@ -169,9 +176,9 @@ namespace MobileExpress
             RepairTypeId = repairTypeId;
             UnlockTypeId = unlockTypeId;
             ArticleId = articleId;
+            Displaytext = displayText;
             Quantity = quantity;
             Garantie = garantie;
-            GarantieOption = garantieOption;
             Remise = remise;
             Price = price;
             Accompte = accompte;
@@ -182,6 +189,7 @@ namespace MobileExpress
             State = state;
             Id = id;
             Verification = verification;
+            OptionGarantie = optionGarantie;
         }
         public MEData()
         {
@@ -189,32 +197,57 @@ namespace MobileExpress
     }
     public class Article
     {
-        public int Id;
-        public string UPC;
-        public string EAN;
-        public string GTIN;
-        public string ISBN;
-        public int? MarqueId;
-        public int? ModeleId;
-        public string Name;
-        public decimal Price;
-        public int Quantity;
-        public Article(int id, int? marqueId, int? modeleId, string name, decimal price, int quantity, string upc, string ean, string gtin, string isbn)
+        public int Id { get; set; }
+        public string CodeReference { get; set; }
+        public int? MarqueId { get; set; }
+        public int? ModeleId { get; set; }
+        public string Produit { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public string DisplayText { get; set; } // Définir DisplayText comme une propriété
+        public Article(int id, int? marqueId, int? modeleId, string produit, decimal price, int quantity, string coderef)
         {
             Id = id;
             MarqueId = marqueId;
             ModeleId = modeleId;
-            Name = name;
+            Produit = produit;
             Price = price;
             Quantity = quantity;
-            UPC = upc;
-            EAN = ean;
-            GTIN = gtin;
-            ISBN = isbn;
+            CodeReference = coderef;
+            DisplayText = string.Empty;
         }
         public Article()
         {
 
+        }
+        public void InitializeDisplayText(List<Marque> marquesDS, List<Modele> modelesDS)
+        {
+            string displayText = $"{Produit}";
+
+            if (MarqueId != null)
+            {
+                var marque = marquesDS.FirstOrDefault(x => x.Id == MarqueId);
+                if (marque != null)
+                {
+                    displayText += $" - {marque.Name}";
+                }
+            }
+
+            if (ModeleId != null)
+            {
+                var modele = modelesDS.FirstOrDefault(x => x.Id == ModeleId && x.MarqueId == MarqueId);
+                if (modele != null)
+                {
+                    displayText += $" {modele.Name}";
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(CodeReference))
+            {
+                displayText += $" - {CodeReference}";
+            }
+
+            DisplayText = displayText;
         }
     }
     public class Garantie
@@ -223,9 +256,9 @@ namespace MobileExpress
         public int Id;
         public string ProductName;
         public int? Months;
-        public bool? Option;
+        public bool Option;
         public Garantie() { }
-        public Garantie(string tabName, int id, string productName, int? months, bool? option)
+        public Garantie(string tabName, int id, string productName, int? months, bool option)
         {
             TabName = tabName;
             Id = id;

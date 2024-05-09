@@ -64,7 +64,6 @@ namespace MobileExpress
             this.buttonTakeOverSave = new System.Windows.Forms.Button();
             this.buttonTakeOverManageRemise = new System.Windows.Forms.Button();
             this.buttonTakeOverManageGarantie = new System.Windows.Forms.Button();
-            this.buttonTakeOverScanner = new System.Windows.Forms.Button();
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.label45 = new System.Windows.Forms.Label();
             this.textBoxTakeOverAccompte = new System.Windows.Forms.TextBox();
@@ -143,18 +142,18 @@ namespace MobileExpress
             // 
             this.label46.AutoSize = true;
             this.label46.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label46.Location = new System.Drawing.Point(3, 0);
+            this.label46.Location = new System.Drawing.Point(3, 6);
             this.label46.Name = "label46";
-            this.label46.Size = new System.Drawing.Size(274, 24);
+            this.label46.Size = new System.Drawing.Size(534, 24);
             this.label46.TabIndex = 36;
-            this.label46.Text = "Recherche par Nom de l\'Article";
+            this.label46.Text = "Recherche par Référence / Nom / Marque / Modèle de produit";
             // 
             // textBoxStockSearch
             // 
             this.textBoxStockSearch.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxStockSearch.Location = new System.Drawing.Point(283, 3);
+            this.textBoxStockSearch.Location = new System.Drawing.Point(543, 3);
             this.textBoxStockSearch.Name = "textBoxStockSearch";
-            this.textBoxStockSearch.Size = new System.Drawing.Size(973, 29);
+            this.textBoxStockSearch.Size = new System.Drawing.Size(713, 29);
             this.textBoxStockSearch.TabIndex = 35;
             // 
             // dataGridViewStock
@@ -404,7 +403,7 @@ namespace MobileExpress
             this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 63.47518F));
             this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 36.52482F));
             this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 165F));
-            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 182F));
+            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 185F));
             this.tableLayoutPanel6.Controls.Add(this.takeOverNumber, 0, 0);
             this.tableLayoutPanel6.Controls.Add(this.buttonTakeOverReset, 3, 0);
             this.tableLayoutPanel6.Controls.Add(this.label43, 0, 0);
@@ -419,7 +418,7 @@ namespace MobileExpress
             // 
             // takeOverNumber
             // 
-            this.takeOverNumber.Location = new System.Drawing.Point(209, 3);
+            this.takeOverNumber.Location = new System.Drawing.Point(208, 3);
             this.takeOverNumber.Name = "takeOverNumber";
             this.takeOverNumber.Size = new System.Drawing.Size(97, 30);
             this.takeOverNumber.TabIndex = 95;
@@ -427,7 +426,7 @@ namespace MobileExpress
             // 
             // buttonTakeOverReset
             // 
-            this.buttonTakeOverReset.Location = new System.Drawing.Point(493, 3);
+            this.buttonTakeOverReset.Location = new System.Drawing.Point(490, 3);
             this.buttonTakeOverReset.Name = "buttonTakeOverReset";
             this.buttonTakeOverReset.Size = new System.Drawing.Size(147, 30);
             this.buttonTakeOverReset.TabIndex = 91;
@@ -447,7 +446,7 @@ namespace MobileExpress
             // 
             // buttonTakeOverSearch
             // 
-            this.buttonTakeOverSearch.Location = new System.Drawing.Point(328, 3);
+            this.buttonTakeOverSearch.Location = new System.Drawing.Point(325, 3);
             this.buttonTakeOverSearch.Name = "buttonTakeOverSearch";
             this.buttonTakeOverSearch.Size = new System.Drawing.Size(150, 30);
             this.buttonTakeOverSearch.TabIndex = 95;
@@ -459,15 +458,13 @@ namespace MobileExpress
             // 
             this.tableLayoutPanel4.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.tableLayoutPanel4.AutoSize = true;
-            this.tableLayoutPanel4.ColumnCount = 4;
+            this.tableLayoutPanel4.ColumnCount = 3;
             this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 47.78481F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 322F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 323F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 318F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 434F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 423F));
             this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverSave, 0, 0);
             this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverManageRemise, 2, 0);
             this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverManageGarantie, 1, 0);
-            this.tableLayoutPanel4.Controls.Add(this.buttonTakeOverScanner, 3, 0);
             this.tableLayoutPanel4.Location = new System.Drawing.Point(42, 556);
             this.tableLayoutPanel4.Name = "tableLayoutPanel4";
             this.tableLayoutPanel4.RowCount = 1;
@@ -482,7 +479,7 @@ namespace MobileExpress
             this.buttonTakeOverSave.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonTakeOverSave.Location = new System.Drawing.Point(3, 12);
             this.buttonTakeOverSave.Name = "buttonTakeOverSave";
-            this.buttonTakeOverSave.Size = new System.Drawing.Size(312, 58);
+            this.buttonTakeOverSave.Size = new System.Drawing.Size(418, 58);
             this.buttonTakeOverSave.TabIndex = 82;
             this.buttonTakeOverSave.Text = "Sauvegarder";
             this.buttonTakeOverSave.UseVisualStyleBackColor = true;
@@ -493,9 +490,9 @@ namespace MobileExpress
             this.buttonTakeOverManageRemise.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonTakeOverManageRemise.AutoSize = true;
             this.buttonTakeOverManageRemise.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonTakeOverManageRemise.Location = new System.Drawing.Point(643, 12);
+            this.buttonTakeOverManageRemise.Location = new System.Drawing.Point(861, 12);
             this.buttonTakeOverManageRemise.Name = "buttonTakeOverManageRemise";
-            this.buttonTakeOverManageRemise.Size = new System.Drawing.Size(317, 58);
+            this.buttonTakeOverManageRemise.Size = new System.Drawing.Size(417, 58);
             this.buttonTakeOverManageRemise.TabIndex = 88;
             this.buttonTakeOverManageRemise.Text = "Gérer les remises";
             this.buttonTakeOverManageRemise.UseVisualStyleBackColor = true;
@@ -506,25 +503,13 @@ namespace MobileExpress
             this.buttonTakeOverManageGarantie.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonTakeOverManageGarantie.AutoSize = true;
             this.buttonTakeOverManageGarantie.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonTakeOverManageGarantie.Location = new System.Drawing.Point(321, 12);
+            this.buttonTakeOverManageGarantie.Location = new System.Drawing.Point(427, 12);
             this.buttonTakeOverManageGarantie.Name = "buttonTakeOverManageGarantie";
-            this.buttonTakeOverManageGarantie.Size = new System.Drawing.Size(316, 58);
+            this.buttonTakeOverManageGarantie.Size = new System.Drawing.Size(428, 58);
             this.buttonTakeOverManageGarantie.TabIndex = 87;
             this.buttonTakeOverManageGarantie.Text = "Gérer les garanties";
             this.buttonTakeOverManageGarantie.UseVisualStyleBackColor = true;
             this.buttonTakeOverManageGarantie.Click += new System.EventHandler(this.buttonTakeOverManageGarantie_Click);
-            // 
-            // buttonTakeOverScanner
-            // 
-            this.buttonTakeOverScanner.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonTakeOverScanner.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonTakeOverScanner.Location = new System.Drawing.Point(966, 12);
-            this.buttonTakeOverScanner.Name = "buttonTakeOverScanner";
-            this.buttonTakeOverScanner.Size = new System.Drawing.Size(312, 58);
-            this.buttonTakeOverScanner.TabIndex = 89;
-            this.buttonTakeOverScanner.Text = "Scanner un article";
-            this.buttonTakeOverScanner.UseVisualStyleBackColor = true;
-            this.buttonTakeOverScanner.Click += new System.EventHandler(this.ButtonTakeOverScanner_Click);
             // 
             // tableLayoutPanel3
             // 
@@ -960,7 +945,6 @@ namespace MobileExpress
         private TextBox textBoxCustomerRelationEmailAddress;
         private Label label3;
         private ComboBox comboBoxCustomerRelationSexe;
-        private Button buttonTakeOverScanner;
         private Button buttonStockAdd;
         private ComboBox comboBoxTakeOverCustomer;
     }

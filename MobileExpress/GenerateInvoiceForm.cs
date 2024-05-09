@@ -176,7 +176,7 @@ namespace MobileExpress
                         int product = (mEData.ArticleId.Value as int?).Value;
                         DataGridViewTextBoxCell productTextBoxCell = (DataGridViewTextBoxCell)dataGridViewGenerateInvoice.Rows[index].Cells["dataGridViewGenerateInvoiceProduct"];
                         Article article = TakeOversDS.Find(x => x.Id == 2).Articles.Find(x => x.Id == product);
-                        productTextBoxCell.Value = article.Name;
+                        productTextBoxCell.Value = article.Produit;
                     }
 
                     DataGridViewTextBoxCell imeiTextBoxCell = (DataGridViewTextBoxCell)dataGridViewGenerateInvoice.Rows[index].Cells["dataGridViewGenerateInvoiceIMEI"];
@@ -214,7 +214,7 @@ namespace MobileExpress
                         }
                         else if (string.Compare("Achat", type) == 0)
                         {
-                            article = TakeOversDS.Find(x => x.Id == 2).Articles.Find(x => string.Compare(x.Name, (string)line.Cells["dataGridViewGenerateInvoiceProduct"].Value) == 0);
+                            article = TakeOversDS.Find(x => x.Id == 2).Articles.Find(x => string.Compare(x.Produit, (string)line.Cells["dataGridViewGenerateInvoiceProduct"].Value) == 0);
                         }
                         foreach (MEData mEData in MEDatas)
                         {

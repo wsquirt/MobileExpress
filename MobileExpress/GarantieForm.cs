@@ -84,6 +84,10 @@ namespace MobileExpress
                 if (GarantiesTemp == null || !GarantiesTemp.Any())
                 {
                     MessageBox.Show("Il n'y a pas de garantie à gérer. Veuillez reprendre la prise en charge ou la facture.", "Alerte", MessageBoxButtons.OK);
+                    // Indiquer que le formulaire doit se fermer avec un résultat valide (OK)
+                    this.DialogResult = DialogResult.Cancel;
+                    // Fermer le formulaire
+                    this.Close();
                     return;
                 }
 
@@ -107,7 +111,7 @@ namespace MobileExpress
                     textBoxGarantieMonths.Value = garantie.Months;
 
                     DataGridViewCheckBoxCell checkBoxGarantieOption = (DataGridViewCheckBoxCell)dataGridViewGarantie.Rows[index].Cells["dataGridViewGarantieOption"];
-                    checkBoxGarantieOption.Value = garantie.Option ?? false;
+                    checkBoxGarantieOption.Value = garantie.Option;
 
                     index++;
                 }
@@ -133,7 +137,7 @@ namespace MobileExpress
                     {
                         int id = (row.Cells["dataGridViewGarantieId"].Value as int?).Value;
                         int? garantieMonths = row.Cells["dataGridViewGarantieMonths"].Value as int?;
-                        bool? garantieOption = row.Cells["dataGridViewGarantieOption"].Value as bool?;
+                        bool garantieOption = (row.Cells["dataGridViewGarantieOption"].Value as bool?) ?? false;
 
                         for (int i = 0; i < GarantiesTemp.Count; i++)
                         {

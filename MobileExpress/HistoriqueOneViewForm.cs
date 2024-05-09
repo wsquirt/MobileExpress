@@ -616,11 +616,10 @@ namespace MobileExpress
                         string imei = row.Cells["textBoxIMEI"].Value as string;
                         int? repairTypeId = typeItem == "Réparation" ? TakeOversDS.First(t => t.Id == 0).RepairTypes.FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0)?.Id : null;
                         int? unlockTypeId = typeItem == "Déblocage" ? TakeOversDS.First(t => t.Id == 1).UnlockTypes.FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0)?.Id : null;
-                        int? articleId = typeItem == "Achat" ? TakeOversDS.First(t => t.Id == 2).Articles.FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0)?.Id : null;
+                        int? articleId = typeItem == "Achat" ? TakeOversDS.First(t => t.Id == 2).Articles.FirstOrDefault(x => string.Compare(x.Produit.ToLower(), typeText?.ToLower()) == 0)?.Id : null;
                         int quantity = (row.Cells["textBoxQuantity"].Value as int?).Value;
                         decimal price = (row.Cells["textBoxPrice"].Value as decimal?) ?? 0;
                         int? monthsGarantie = (row.Cells["textBoxGarantie"].Value as string) == "Non" ? null : (int?)int.Parse((row.Cells["textBoxGarantie"].Value as string).Split(' ')[0]);
-                        bool optionGarantie = (row.Cells["checkBoxGarantieOption"].Value as bool?).Value;
                         decimal? remise = (row.Cells["textBoxRemise"].Value as decimal?) ?? 0;
                         decimal? accompte = (row.Cells["textBoxAccompte"].Value as decimal?) ?? 0;
                         decimal? resteDu = (row.Cells["textBoxResteDu"].Value as decimal?) ?? 0;
@@ -630,14 +629,16 @@ namespace MobileExpress
                         TakeOverState state = (row.Cells["comboBoxState"].Value as TakeOverState?).Value;
                         int id = (row.Cells["textBoxId"].Value as int?).Value;
                         bool verification = (row.Cells["checkBoxVerification"].Value as bool?).Value;
+                        bool optionGarantie = (row.Cells["checkBoxGarantieOption"].Value as bool?) ?? false;
 
                         if (!priseEnChargeIds.Any(x => x == takeOverId))
                         {
                             priseEnChargeIds.Add(takeOverId);
                         }
                         mEDatas.Add(new MEData(
-                        takeOverId, date, invoiceId, customerId, marqueId, modeleId, imei, repairTypeId, unlockTypeId, articleId,
-                        quantity, price, monthsGarantie, optionGarantie, remise, accompte, resteDu, paid, total, paymentMode, state, id, verification));
+                        takeOverId, date, invoiceId, customerId, marqueId, modeleId, imei, repairTypeId, unlockTypeId, articleId, TakeOversDS.First(x => x.Id == 2).Articles.First(x => x.Id == articleId).DisplayText,
+                        quantity, price, monthsGarantie, remise, accompte, resteDu, paid, total, paymentMode, state, id, verification,
+                        optionGarantie));
                     }
                 }
 
@@ -738,8 +739,18 @@ namespace MobileExpress
 
                         string path = Paths.ReceiptDSPath;
 
-                        List<string> items = new List<string>() { "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;Quantité;Prix;Garantie;Remise;Accompte;Reste dû;Payé;Total;Numéro de mode de paiement;Etat;Id;Vérification" };
-                        items.AddRange(MEDatasDS.Select(x => $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};{x.Id};{(x.Verification ? "Oui" : "Non")}"));
+                        List<string> items = new List<string>() { 
+                            "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;" +
+                            "Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;" +
+                            "Quantité;Prix;Garantie;Remise;Accompte;" +
+                            "Reste dû;Payé;Total;Numéro de mode de paiement;Etat;" +
+                            "Id;Vérification;Option de garantie" };
+                        items.AddRange(MEDatasDS.Select(x =>
+                            $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};" +
+                            $"{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};" +
+                            $"{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};" +
+                            $"{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};" +
+                            $"{x.Id};{(x.Verification ? "Oui" : "Non")};{(x.OptionGarantie ? "Oui" : "Non")}"));
                         Tools.RewriteDataToFile(items, path, false);
 
                         decimal payeAFacturer = factureACreer.First().Paid.Value;
@@ -803,7 +814,7 @@ namespace MobileExpress
                             {
                                 if (!articles.Any(x => x.Key == article.Id))
                                 {
-                                    articles.Add(article.Id, article.Name);
+                                    articles.Add(article.Id, article.Produit);
                                 }
                                 if (!marques.Any(x => x.Key == marque.Id))
                                 {

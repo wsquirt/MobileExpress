@@ -1,12 +1,27 @@
-﻿using System;
+﻿using Microsoft.Office.Interop.Word;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.IO.Ports;
 using System.Linq;
+using System.Net.Http;
+using System.Reflection;
+using System.Security.Policy;
 using System.Threading.Tasks;
+using System.Timers;
+using System.Web.Mvc.Html;
+using System.Web.UI.WebControls;
 using System.Windows.Forms;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using Xceed.Document.NET;
 using Xceed.Words.NET;
+using static MobileExpress.FormMobileExpress;
+using Color = System.Drawing.Color;
+using Task = System.Threading.Tasks.Task;
+using TextBox = System.Windows.Forms.TextBox;
 
 namespace MobileExpress
 {
@@ -37,15 +52,13 @@ namespace MobileExpress
         {
             try
             {
-                Func<string, string, string, string, string> func = (tmpnom, tmpmarque, tmpmodele, tmpimei) =>
+                Func<string, string, string, string> func = (tmpmarque, tmpmodele, tmpimei) =>
                 {
                     return
                         !string.IsNullOrWhiteSpace(tmpmarque) && !string.IsNullOrWhiteSpace(tmpimei) ?
-                            $"{tmpmarque} {tmpmodele} (IMEI:{tmpimei}) - {tmpnom}" :
+                            $"{tmpmarque} {tmpmodele} (IMEI:{tmpimei})" :
                         string.IsNullOrWhiteSpace(tmpmarque) && !string.IsNullOrWhiteSpace(tmpimei) ?
-                            $"(IMEI:{tmpimei}) {tmpnom}" :
-                        !string.IsNullOrWhiteSpace(tmpmarque) && string.IsNullOrWhiteSpace(tmpimei) ?
-                            $"{tmpmarque} {tmpmodele} - {tmpnom}" : $"{tmpnom}";
+                            $"(IMEI:{tmpimei})" : $"{tmpmarque} {tmpmodele}";
                 };
 
                 decimal total = 0;
@@ -69,12 +82,7 @@ namespace MobileExpress
                         continue;
                     }
 
-                    string articlename = type == 1 ?
-                        (mEData.RepairTypeId.HasValue ? repairTypeNames[mEData.RepairTypeId.Value] :
-                        mEData.UnlockTypeId.HasValue ? unlockTypeNames[mEData.UnlockTypeId.Value] :
-                        articles[mEData.ArticleId.Value]) :
-                        (mEData.RepairTypeId.HasValue ? repairTypeNames[mEData.RepairTypeId.Value] :
-                        unlockTypeNames[mEData.UnlockTypeId.Value]);
+                    string panne = type == 0 ? (mEData.RepairTypeId.HasValue ? repairTypeNames[mEData.RepairTypeId.Value] : unlockTypeNames[mEData.UnlockTypeId.Value]) : articles[mEData.ArticleId.Value];
                     string marquename = mEData.MarqueId.HasValue ? marques[mEData.MarqueId.Value] : string.Empty;
                     string modelename = mEData.ModeleId.HasValue ? modeles[mEData.ModeleId.Value] : string.Empty;
                     string imei = mEData.IMEI;
@@ -83,14 +91,16 @@ namespace MobileExpress
                     {
                         docxArticles.Add(new DocxArticle()
                         {
-                            Name = func(articlename, marquename, modelename, imei),
+                            Name = func(marquename, modelename, imei),
+                            Panne = panne,
                             Quantity = mEData.Quantity.ToString(),
                             Price = string.Empty,
                             Total = string.Empty,
                         });
                         docxArticles.Add(new DocxArticle()
                         {
-                            Name = "Vérification - " + func(articlename, marquename, modelename, imei),
+                            Name = func(marquename, modelename, imei),
+                            Panne = "Vérification",
                             Quantity = mEData.Quantity.ToString(),
                             Price = mEData.Price.Value.ToString(),
                             Total = (mEData.Quantity * mEData.Price.Value).ToString(),
@@ -101,7 +111,8 @@ namespace MobileExpress
                     {
                         docxArticles.Add(new DocxArticle()
                         {
-                            Name = func(articlename, marquename, modelename, imei),
+                            Name = func(marquename, modelename, imei),
+                            Panne = panne,
                             Quantity = mEData.Quantity.ToString(),
                             Price = mEData.Price.ToString(),
                             Total = (mEData.Quantity * mEData.Price.Value).ToString(),
@@ -112,7 +123,8 @@ namespace MobileExpress
                     {
                         docxArticles.Add(new DocxArticle()
                         {
-                            Name = "Remise - " + func(articlename, marquename, modelename, imei),
+                            Name = func(marquename, modelename, imei),
+                            Panne = "Remise",
                             Quantity = mEData.Quantity.ToString(),
                             Price = (mEData.Remise.Value * -1).ToString(),
                             Total = (mEData.Quantity * mEData.Remise.Value * -1).ToString(),
@@ -123,7 +135,8 @@ namespace MobileExpress
                     {
                         docxArticles.Add(new DocxArticle()
                         {
-                            Name = $"Garantie {$"{mEData.Garantie.Value.ToString()} mois"}{((mEData.GarantieOption ?? false) ? " (Hors casse et oxydation)" : string.Empty)} - " + func(articlename, marquename, modelename, imei),
+                            Name = func(marquename, modelename, imei),
+                            Panne = $"Garantie {$"{mEData.Garantie.Value.ToString()} mois"}{((mEData.OptionGarantie) ? " (Hors casse et oxydation)" : string.Empty)}",
                             Quantity = mEData.Quantity.ToString(),
                             Price = string.Empty,
                             Total = string.Empty,
@@ -234,13 +247,15 @@ namespace MobileExpress
                 {
                     var row1 = table1.InsertRow();
                     row1.Cells[0].Paragraphs.First().Append(article.Name);
-                    row1.Cells[0].Paragraphs.First().FontSize(docxData.Type == 0 ? 9 : 12);
-                    row1.Cells[1].Paragraphs.First().Append(article.Quantity);
-                    row1.Cells[1].Paragraphs.First().FontSize(docxData.Type == 0 ? 9 : 12);
-                    row1.Cells[2].Paragraphs.First().Append(article.Price);
-                    row1.Cells[2].Paragraphs.First().FontSize(docxData.Type == 0 ? 9 : 12);
-                    row1.Cells[3].Paragraphs.First().Append(article.Total);
-                    row1.Cells[3].Paragraphs.First().FontSize(docxData.Type == 0 ? 9 : 12);
+                    row1.Cells[0].Paragraphs.First().FontSize(docxData.Type == 0 ? 8 : 12);
+                    row1.Cells[1].Paragraphs.First().Append(article.Panne);
+                    row1.Cells[1].Paragraphs.First().FontSize(docxData.Type == 0 ? 8 : 12);
+                    row1.Cells[2].Paragraphs.First().Append(article.Quantity);
+                    row1.Cells[2].Paragraphs.First().FontSize(docxData.Type == 0 ? 8 : 12);
+                    row1.Cells[3].Paragraphs.First().Append(article.Price);
+                    row1.Cells[3].Paragraphs.First().FontSize(docxData.Type == 0 ? 8 : 12);
+                    row1.Cells[4].Paragraphs.First().Append(article.Total);
+                    row1.Cells[4].Paragraphs.First().FontSize(docxData.Type == 0 ? 8 : 12);
                 }
                 if (docxData.Type == 0)
                 {
@@ -250,13 +265,15 @@ namespace MobileExpress
                     {
                         var row2 = table2.InsertRow();
                         row2.Cells[0].Paragraphs.First().Append(article.Name);
-                        row2.Cells[0].Paragraphs.First().FontSize(9);
-                        row2.Cells[1].Paragraphs.First().Append(article.Quantity);
-                        row2.Cells[1].Paragraphs.First().FontSize(9);
-                        row2.Cells[2].Paragraphs.First().Append(article.Price);
-                        row2.Cells[2].Paragraphs.First().FontSize(9);
-                        row2.Cells[3].Paragraphs.First().Append(article.Total);
-                        row2.Cells[3].Paragraphs.First().FontSize(9);
+                        row2.Cells[0].Paragraphs.First().FontSize(8);
+                        row2.Cells[1].Paragraphs.First().Append(article.Panne);
+                        row2.Cells[1].Paragraphs.First().FontSize(8);
+                        row2.Cells[2].Paragraphs.First().Append(article.Quantity);
+                        row2.Cells[2].Paragraphs.First().FontSize(8);
+                        row2.Cells[3].Paragraphs.First().Append(article.Price);
+                        row2.Cells[3].Paragraphs.First().FontSize(8);
+                        row2.Cells[4].Paragraphs.First().Append(article.Total);
+                        row2.Cells[4].Paragraphs.First().FontSize(8);
                     }
                 }
 
@@ -432,41 +449,32 @@ namespace MobileExpress
             Visible = false,
             ReadOnly = true,
         };
-        public static DataGridViewTextBoxColumn TakeOverAchatMarqueColumn = new DataGridViewTextBoxColumn
+        public static DataGridViewTextBoxColumn TakeOverAchatArticleTColumn = new DataGridViewTextBoxColumn
         {
-            HeaderText = "Marque",
-            Name = "marque",
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-            DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-            ValueType = typeof(string),
-            Visible = true,
-            ReadOnly = false,
-        };
-        public static DataGridViewTextBoxColumn TakeOverAchatModeleColumn = new DataGridViewTextBoxColumn
-        {
-            HeaderText = "Modèle",
-            Name = "modele",
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-            DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
-            ValueType = typeof(string),
-            Visible = true,
-            ReadOnly = false,
-        };
-        public static DataGridViewTextBoxColumn TakeOverAchatArticleColumn = new DataGridViewTextBoxColumn
-        {
-            HeaderText = "Article",
             Name = "article",
+            HeaderText = "Article",
             AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
             DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
             ValueType = typeof(string),
             Visible = true,
             ReadOnly = false,
+        };
+        public static DataGridViewComboBoxColumn TakeOverAchatArticleCColumn = new DataGridViewComboBoxColumn
+        {
+            Name = "article",
+            HeaderText = "Article",
+            //DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
+            //DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+            ReadOnly = false,
+            //DisplayMember = "id",
+            //ValueMember = "name",
         };
         public static DataGridViewTextBoxColumn TakeOverAchatQuantityColumn = new DataGridViewTextBoxColumn()
         {
             HeaderText = "Quantité",
             Name = "quantity",
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
             DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
             ValueType = typeof(int),
             Visible = true,
@@ -476,7 +484,7 @@ namespace MobileExpress
         {
             HeaderText = "Prix",
             Name = "price",
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
             DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
             ValueType = typeof(decimal),
             Visible = true,
@@ -486,7 +494,7 @@ namespace MobileExpress
         {
             HeaderText = "Garantie",
             Name = "garantie",
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
             Visible = true,
             ReadOnly = false,
         };
@@ -494,7 +502,7 @@ namespace MobileExpress
         {
             HeaderText = "Remise",
             Name = "remise",
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
             Visible = true,
             ReadOnly = false,
         };
@@ -503,16 +511,416 @@ namespace MobileExpress
             HeaderText = "Action",
             Name = "delete",
             Text = "Supprimer",
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
             DefaultCellStyle = new DataGridViewCellStyle { ForeColor = Color.Black },
             Visible = true,
             ReadOnly = false,
         };
+        #region Scanner
+        #region Scanner
+        public static bool IsScannerOK = true;
+        private static SerialPort CurrentPort = new SerialPort();
+        private static System.Timers.Timer ATimer;
+        public delegate void updateDelegate(string txt);
+        static Form FormCible;
+        static updateTextBoxScannerBarcodeDelegate MethodeToExecute;
+        #endregion
+        public static T GetPropertyValue<T>(object obj, string propName)
+        {
+            return (T)obj.GetType().GetProperty(propName).GetValue(obj, null);
+        }
+        public static void InitializeScanner<T>(
+            T form,
+            updateTextBoxScannerBarcodeDelegate methodeToExecute
+        ) where T : Form
+        {
+            try
+            {
+                CloseScanner();
+
+                CurrentPort.PortName = "COM3";
+                CurrentPort.BaudRate = 19200;
+                CurrentPort.ReadTimeout = 1000;
+                CurrentPort.Parity = Parity.None;
+                CurrentPort.StopBits = StopBits.One;
+                CurrentPort.DataBits = 8;
+
+                FormCible = form;
+
+                ATimer = new System.Timers.Timer(1000);
+                MethodeToExecute = methodeToExecute;
+                ATimer.Elapsed -= TimedEvent;
+                ATimer.Elapsed += TimedEvent;
+                ATimer.AutoReset = true;
+                ATimer.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                IsScannerOK = false;
+                MessageBox.Show($"Le scanner est indisponible. Erreur à remonter : {ex.StackTrace}", "Alerte", MessageBoxButtons.OK);
+            }
+        }
+        private static void TimedEvent(object sender, ElapsedEventArgs e)
+        {
+            OnTimedEvent(sender, e, FormCible, MethodeToExecute);
+        }
+        private static void OnTimedEvent<T>(object sender, ElapsedEventArgs e, T form, updateTextBoxScannerBarcodeDelegate methodeToExecute) where T : Form
+        {
+            try
+            {
+                if (IsScannerOK && !CurrentPort.IsOpen)
+                {
+                    CurrentPort.Open();
+                    System.Threading.Thread.Sleep(100); /// for recieve all data from scaner to buffer
+                    CurrentPort.DiscardInBuffer();      /// clear buffer          
+                }
+                if (IsScannerOK)
+                {
+                    var textBoxScanner = form.GetType().GetProperty("ScannerBarcode")?.GetValue(form, null);
+
+                    if (textBoxScanner == null)
+                        return;
+                    TextBox textBox = (TextBox)textBoxScanner;
+
+                    string strFromPort = CurrentPort.ReadExisting().Replace("\r", "").Replace("\n", "");
+
+                    if (string.IsNullOrWhiteSpace(strFromPort))
+                        return;
+
+                    // Exécute la méthode spécifiée lorsque le scanner est décclenché
+                    textBox.BeginInvoke(methodeToExecute, strFromPort);
+
+                    //Services.CloseScanner();
+                    //Services.OpenScanner();
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                if (string.Compare(ex.Message, "L'accès au port 'COM3' est refusé.") == 0)
+                    return;
+                MessageBox.Show("L'accès au scanner est refusé.", "Alerte", MessageBoxButtons.OK);
+            }
+            catch (IOException ex)
+            {
+                if (string.Compare(ex.Message, "L'opération d'entrée/sortie a été abandonnée en raison de l'arrêt d’un thread ou à la demande d'une application.\r\n") == 0)
+                    return;
+                MessageBox.Show("Le scanner est en cours de démarrage.", "Alerte", MessageBoxButtons.OK);
+            }
+            catch (InvalidOperationException)
+            {
+                ;
+            }
+            catch (Exception ex)
+            {
+                if (string.Compare(ex.Message, "Le port 'COM3' n'existe pas.") == 0)
+                    return;
+                if (string.Compare(ex.Message, "Le délai d'attente de l'opération a expiré.") == 0)
+                    return;
+                MessageBox.Show("Le scanner est indisponible.", "Alerte", MessageBoxButtons.OK);
+            }
+        }
+        public static void OpenScanner()
+        {
+            if (IsScannerOK && !CurrentPort.IsOpen)
+            {
+                CurrentPort.Open();
+                System.Threading.Thread.Sleep(100); /// for recieve all data from scaner to buffer
+                CurrentPort.DiscardInBuffer();      /// clear buffer          
+            }
+        }
+        public static void CloseScanner()
+        {
+            if (CurrentPort != null && CurrentPort.IsOpen)
+                CurrentPort.Close();
+        }
+        #endregion
         #endregion
         #endregion
         #region Relation client
         #endregion
         #region Stock
         #endregion
+
+        // Méthode générique pour obtenir la valeur d'une propriété à partir d'un objet
+        public static object GetPropertyValue(object obj, string propertyName)
+        {
+            foreach (var prop in propertyName.Split('.'))
+            {
+                if (obj == null)
+                    return null;
+
+                PropertyInfo propInfo = obj.GetType().GetProperty(prop);
+                if (propInfo == null)
+                    return null;
+
+                obj = propInfo.GetValue(obj);
+            }
+
+            return obj;
+        }
+        public static Marque GetMarqueFromBarcodeScanner(List<Marque> marques, string marqueName = null)
+        {
+            Marque marque = null;
+
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(marqueName) && (marques?.Any() ?? false))
+                {
+                    marque = marques.FirstOrDefault(x =>
+                        x.Name.Replace(" ", "").Trim().ToLowerInvariant().Contains(
+                            marqueName.Replace(" ", "").Trim().ToLowerInvariant()));
+                }
+
+                if (marque == null)
+                {
+                    marque = new Marque(
+                        marques.OrderByDescending(x => x.Id).FirstOrDefault()?.Id + 1 ?? 1,
+                        marqueName);
+                    marques.Add(marque);
+                    Tools.WriteLineTofile($"{marque.Id};{marque.Name}", Paths.MarquesDSPath, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Une erreur lors de la détection de la marque est survenue. Erreur à remonter : {ex.StackTrace}", "Erreur", MessageBoxButtons.OK);
+            }
+
+            return marque;
+        }
+        public static Modele GetModeleFromBarcodeScanner(List<Modele> modeles, string modeleName, int marqueId)
+        {
+            Modele modele = null;
+
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(modeleName) && (modeles?.Any() ?? false))
+                {
+                    modele = modeles.FirstOrDefault(x =>
+                        x.MarqueId == marqueId && x.Name.Replace(" ", "").Trim().ToLowerInvariant().Contains(
+                            modeleName.Replace(" ", "").Trim().ToLowerInvariant()));
+                }
+
+                if (modele == null)
+                {
+                    modele = new Modele(modeles.Count(), marqueId, modeleName);
+                    modeles.Add(modele);
+                    Tools.WriteLineTofile($"{modele.Id};{modele.MarqueId};{modele.Name}", Paths.ModelesDSPath, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Une erreur lors de la détection du modele est survenue. Erreur à remonter : {ex.StackTrace}", "Erreur", MessageBoxButtons.OK);
+            }
+
+            return modele;
+        }
+        public static async Task<Article> GetBarcodeDataFromUrlAsync(string barcode, List<Marque> MarquesDS, List<Modele> ModelesDS, List<TakeOverType> TakeOverTypesDS)
+        {
+            Article articleTmp = null;
+            try
+            {
+                articleTmp = new Article();
+
+                HttpClient client = new HttpClient();
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri($@"https://api.upcitemdb.com/prod/trial/lookup?upc={barcode}"),
+                };
+                var response = await client.SendAsync(request).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+
+                var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                Root test = JsonConvert.DeserializeObject<Root>(body);
+                if (test != null && test.total > 0)
+                {
+                    articleTmp.CodeReference = test.items.First().upc;
+                    if (string.IsNullOrWhiteSpace(articleTmp.CodeReference))
+                        articleTmp.CodeReference = test.items.First().ean;
+                    if (string.IsNullOrWhiteSpace(articleTmp.CodeReference))
+                        articleTmp.CodeReference = test.items.First().isbn;
+                    if (string.IsNullOrWhiteSpace(articleTmp.CodeReference))
+                        articleTmp.CodeReference = test.items.First().gtin;
+
+                    articleTmp.MarqueId = Services.GetMarqueFromBarcodeScanner(MarquesDS, test.items.First().brand).Id;
+                    if (articleTmp.MarqueId != null)
+                        articleTmp.ModeleId = Services.GetModeleFromBarcodeScanner(ModelesDS, test.items.First().model, articleTmp.MarqueId.Value).Id;
+                    if (!string.IsNullOrWhiteSpace(test.items.First().title))
+                    {
+                        articleTmp.Produit = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(x =>
+                            x.Produit.Replace(" ", "").ToLower(System.Globalization.CultureInfo.InvariantCulture)
+                            .Contains(test.items.First().title.Replace(" ", "").ToLower(System.Globalization.CultureInfo.InvariantCulture)))?.Produit;
+                        if (!string.IsNullOrWhiteSpace(articleTmp.Produit))
+                        {
+                            articleTmp.Produit = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(x =>
+                                x.Produit.Replace(" ", "").ToLower(System.Globalization.CultureInfo.InvariantCulture)
+                                .Contains(test.items.First().title.Replace(" ", "").ToLower(System.Globalization.CultureInfo.InvariantCulture)))?.Produit;
+                        }
+                    }
+                }
+                else
+                {
+                    articleTmp = null;
+                    MessageBox.Show("Aucune information a été trouvée. Veuillez renseigner le reste des informations.", "Alerte", MessageBoxButtons.OK);
+                    Services.CloseScanner();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+                Services.CloseScanner();
+                Services.OpenScanner();
+            }
+            return articleTmp;
+        }
+        public static Article GetBarcodeDataFromDB(string barcode, List<TakeOverType> TakeOverTypesDS)
+        {
+            Article articleTmp = null;
+            try
+            {
+                articleTmp = TakeOverTypesDS
+                    .First(x => x.Id == 2).Articles
+                    .FirstOrDefault(x => string.Compare(barcode, x.CodeReference) == 0);
+
+                CloseScanner();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+                CloseScanner();
+                OpenScanner();
+            }
+            return articleTmp;
+        }
+
+        public static bool CheckArticleInDataGridView(string codeReference, DataGridView dataGridView, int colonneCible)
+        {
+            bool isArticleInDataGridView = false;
+            try
+            {
+                int columnIndex = colonneCible;
+                if (dataGridView.Columns[columnIndex] is DataGridViewComboBoxColumn comboBoxColumn)
+                {
+                    foreach (DataGridViewRow row in dataGridView.Rows)
+                    {
+                        string dataInRow = row.Cells[columnIndex].Value as string;
+                        if (string.IsNullOrWhiteSpace(dataInRow))
+                            break;
+                        // Comparez le texte avec le DisplayText de l'élément
+                        isArticleInDataGridView = dataInRow.ToLowerInvariant().Contains(codeReference.ToLowerInvariant());
+                        if (isArticleInDataGridView)
+                            break;
+                    }
+                }
+                else if (dataGridView.Columns[columnIndex] is DataGridViewTextBoxColumn textBoxColumn)
+                {
+                    foreach (DataGridViewRow row in dataGridView.Rows)
+                    {
+                        string dataInRow = row.Cells[columnIndex].Value as string;
+                        if (string.IsNullOrWhiteSpace(dataInRow))
+                            continue;
+                        // Comparez le texte avec le DisplayText de l'élément
+                        isArticleInDataGridView = dataInRow.Trim().ToLowerInvariant().Contains(codeReference.Trim().ToLowerInvariant());
+                        if (isArticleInDataGridView)
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+            }
+            return isArticleInDataGridView;
+        }
+        public static bool CheckArticleInStock(string codeReference, List<Article> articles)
+        {
+            try
+            {
+                return articles.Any(x => x.DisplayText.Contains(codeReference));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+            }
+            return false;
+        }
+
+        public static (Marque, List<Marque> marques) AddNewMarque(string marqueName, List<Marque> marques)
+        {
+            int id = marques.OrderByDescending(x => x.Id).FirstOrDefault()?.Id + 1 ?? 1;
+            string name = char.ToUpper(marqueName[0]) + marqueName.Substring(1);
+            Marque newMarque = new Marque(id, name);
+            marques.Add(newMarque);
+            Tools.WriteLineTofile($"{newMarque.Id};{newMarque.Name}", Paths.MarquesDSPath, true);
+            return (newMarque, marques);
+        }
+        public static (Modele, List<Modele> modeles) AddNewModele(string modeleName, int marqueId, List<Modele> modeles)
+        {
+            int id = modeles.OrderByDescending(x => x.Id).FirstOrDefault()?.Id + 1 ?? 1;
+            int mId = marqueId;
+            string name = char.ToUpper(modeleName[0]) + modeleName.Substring(1);
+            Modele newModele = new Modele(id, mId, name);
+            modeles.Add(newModele);
+            Tools.WriteLineTofile($"{newModele.Id};{newModele.MarqueId};{newModele.Name}", Paths.ModelesDSPath, true);
+            return (newModele, modeles);
+        }
+        public static (Article, List<Marque>, List<Modele>, List<Article>) AddNewArticle(
+            string marqueName
+            , string modeleName
+            , string codeReference
+            , string articleName
+            , string price
+            , List<Marque> marques
+            , List<Modele> modeles
+            , List<Article> articles)
+        {
+            Marque marque = null;
+            Modele modele = null;
+            string displayTextMarque = string.Empty;
+            string displayTextModele = string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(marqueName))
+            {
+                marque = marques.FirstOrDefault(x => string.Compare(x.Name.Trim().ToLowerInvariant(), marqueName.Trim().ToLowerInvariant()) == 0);
+                if (marque == null)
+                {
+                    (marque, marques) = AddNewMarque(marqueName, marques);
+                }
+                if (marque != null)
+                {
+                    displayTextMarque = $" - {marque.Name}";
+                }
+            }
+            if (marque != null && !string.IsNullOrWhiteSpace(modeleName))
+            {
+                modele = modeles.FirstOrDefault(x => string.Compare(x.Name.Trim().ToLowerInvariant(), modeleName.Trim().ToLowerInvariant()) == 0 && x.MarqueId == marque.Id);
+                if (modele == null)
+                {
+                    (modele, modeles) = AddNewModele(modeleName, marque.Id, modeles);
+                }
+                if (modele != null)
+                {
+                    displayTextModele = $" {modele.Name}";
+                }
+            }
+
+            Article newArticle = new Article()
+            {
+                Id = articles.OrderByDescending(x => x.Id).FirstOrDefault()?.Id + 1 ?? 1,
+                CodeReference = codeReference,
+                MarqueId = marque.Id,
+                ModeleId = modele?.Id,
+                Produit = articleName,
+                Price = Decimal.Parse(price),
+                Quantity = 99,
+                DisplayText =
+                    $"{articleName}" + displayTextMarque + displayTextModele + $" - {codeReference}",
+            };
+            articles.Add(newArticle);
+
+            Tools.WriteLineTofile($"{newArticle.Id};{newArticle.MarqueId};{newArticle.ModeleId};{newArticle.Produit};{newArticle.Price};99;{newArticle.CodeReference}", Paths.StockDSPath, true);
+            return (newArticle, marques, modeles, articles);
+        }
     }
 }

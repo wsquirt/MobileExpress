@@ -11,16 +11,21 @@ namespace MobileExpress
 {
     public partial class ArticleForm : Form
     {
-        private static SerialPort currentPort = new SerialPort();
-        private static System.Timers.Timer aTimer;
         private delegate void updateDelegate(string txt);
 
         List<Article> Articles = new List<Article>();
         List<Marque> Marques = new List<Marque>();
         List<Modele> Modeles = new List<Modele>();
+        string CodeReference = null;
         Article Article;
         StockAction Action = StockAction.Achat;
-        public ArticleForm(StockAction action, Article article, List<Article> articles, List<Marque> marques, List<Modele> modeles)
+        public ArticleForm(
+            StockAction action
+            , List<Article> articles
+            , List<Marque> marques
+            , List<Modele> modeles
+            , string codeReference = null
+            , Article article = null)
         {
             InitializeComponent();
 
@@ -34,43 +39,87 @@ namespace MobileExpress
                 Articles.AddRange(articles);
 
                 Article = article;
+                CodeReference = codeReference;
                 Action = action;
+
                 if (Action == StockAction.Ajout)
                 {
                     labelArticleId.Text = (Articles.OrderByDescending(x => x.Id).First().Id + 1).ToString();
-                }
-                if (Action == StockAction.MiseAJour && article != null)
-                {
-                    labelArticleId.Text = article.Id.ToString();
-                    textBoxUPC.Text = article.UPC;
-                    textBoxEAN.Text = article.EAN;
-                    textBoxGTIN.Text = article.GTIN;
-                    textBoxISBN.Text = article.ISBN;
-                    textBoxMarque.Text = Marques.FirstOrDefault(x => x.Id == (article.MarqueId ?? 0))?.Name ?? string.Empty;
-                    textBoxModele.Text = Modeles.FirstOrDefault(x => x.Id == (article.ModeleId ?? 0) && x.MarqueId == (article.MarqueId ?? 0))?.Name ?? string.Empty;
-                    textBoxProduit.Text = article.Name;
-                    textBoxPrix.Text = article.Price.ToString();
-                }
-                if (Action == StockAction.Achat)
-                {
+                    textBoxCodeRef.Text = article?.CodeReference ?? CodeReference ?? string.Empty;
+                    textBoxQuantity.Text = "1";
+
+                    textBoxMarque.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    textBoxMarque.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                    textBoxMarque.AutoCompleteCustomSource.AddRange(marques.Select(m => m.Name).ToArray());
+                    textBoxMarque.TextChanged += TextBoxMarque_TextChanged;
+
+                    textBoxModele.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    textBoxModele.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                    textBoxModele.AutoCompleteCustomSource.AddRange(Modeles.Select(m => m.Name).ToArray());
+
                     buttonStockDelete.Visible = false;
                     buttonStockDelete.Enabled = false;
                 }
 
-                if (currentPort.IsOpen)
-                    currentPort.Close();
+                if (Action == StockAction.Achat)
+                {
+                    labelArticleId.Text = article.Id.ToString();
+                    textBoxCodeRef.Text = article.CodeReference;
+                    textBoxMarque.Text = Marques.FirstOrDefault(x => x.Id == article.MarqueId)?.Name ?? string.Empty;
+                    textBoxModele.Text = Modeles.FirstOrDefault(x => article.MarqueId != null && x.Id == article.ModeleId)?.Name ?? string.Empty;
+                    textBoxProduit.Text = article.Produit;
+                    textBoxPrix.Text = article.Price.ToString();
+                    textBoxQuantity.Text = "1";
 
-                currentPort.PortName = "COM3";
-                currentPort.BaudRate = 19200;
-                currentPort.ReadTimeout = 1000;
-                currentPort.Parity = Parity.None;
-                currentPort.StopBits = StopBits.One;
-                currentPort.DataBits = 8;
+                    textBoxMarque.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    textBoxMarque.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                    textBoxMarque.AutoCompleteCustomSource.AddRange(marques.Select(m => m.Name).ToArray());
+                    textBoxMarque.TextChanged += TextBoxMarque_TextChanged;
 
-                aTimer = new System.Timers.Timer(1000);
-                aTimer.Elapsed += OnTimedEvent;
-                aTimer.AutoReset = true;
-                aTimer.Enabled = true;
+                    textBoxModele.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    textBoxModele.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                    textBoxModele.AutoCompleteCustomSource.AddRange(Modeles.Select(m => m.Name).ToArray());
+
+                    buttonStockDelete.Visible = false;
+                    buttonStockDelete.Enabled = false;
+                }
+
+                if (Action == StockAction.MiseAJour && article != null)
+                {
+                    labelArticleId.Text = article.Id.ToString();
+                    textBoxCodeRef.Text = article.CodeReference;
+
+                    textBoxMarque.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    textBoxMarque.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                    textBoxMarque.AutoCompleteCustomSource.AddRange(marques.Select(m => m.Name).ToArray());
+                    // Pré-sélection de la marque par défaut
+                    textBoxMarque.Text = Marques.FirstOrDefault(x => x.Id == article.MarqueId)?.Name ?? string.Empty;
+                    textBoxMarque.TextChanged += TextBoxMarque_TextChanged;
+
+                    // Pré-sélection du modèle par défaut
+                    textBoxModele.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    textBoxModele.AutoCompleteSource = AutoCompleteSource.CustomSource;
+                    if (article.MarqueId == null)
+                    {
+                        textBoxModele.AutoCompleteCustomSource.AddRange(Modeles.Select(m => m.Name).ToArray());
+                    }
+                    else if (article.ModeleId == null)
+                    {
+                        textBoxModele.AutoCompleteCustomSource.AddRange(Modeles.Where(x => x.MarqueId == article.MarqueId).Select(m => m.Name).ToArray());
+                    }
+                    else
+                    {
+                        textBoxModele.AutoCompleteCustomSource.AddRange(Modeles.Where(x => x.MarqueId == article.MarqueId).Select(m => m.Name).ToArray());
+                        textBoxModele.Text = Modeles.FirstOrDefault(x => x.Id == article.ModeleId.Value && x.MarqueId == article.MarqueId.Value)?.Name ?? string.Empty;
+                    }
+
+                    textBoxProduit.Text = article.Produit;
+                    textBoxPrix.Text = article.Price.ToString();
+                    textBoxQuantity.Text = article.Quantity.ToString();
+
+                    buttonStockDelete.Visible = true;
+                    buttonStockDelete.Enabled = true;
+                }
             }
             catch (Exception ex)
             {
@@ -81,238 +130,95 @@ namespace MobileExpress
         {
             return (Action, Article, Articles, Marques, Modeles);
         }
-
-        private void OnTimedEvent(object sender, ElapsedEventArgs e)
-        {
-            if (!currentPort.IsOpen)
-            {
-                currentPort.Open();
-                System.Threading.Thread.Sleep(100); /// for recieve all data from scaner to buffer
-                currentPort.DiscardInBuffer();      /// clear buffer          
-            }
-            try
-            {
-                string strFromPort = currentPort.ReadExisting().Replace("\r", "").Replace("\n", "");
-                textBoxUPC.BeginInvoke(new updateDelegate(updateTextBox), strFromPort);
-            }
-            catch { }
-        }
-        private void updateTextBox(string txt)
-        {
-            if (txt.Length != 0)
-            {
-                aTimer.Stop();
-                aTimer.Dispose();
-                currentPort.Close();
-                bool result = GetDataFromDB(txt);
-                if (!result)
-                    GetDataFromURL(txt.Replace("\r", "").Replace("\n", ""));
-            }
-        }
-        private async void GetDataFromURL(string barcode)
-        {
-            try
-            {
-                var client = new HttpClient();
-                var request = new HttpRequestMessage
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri($@"https://api.upcitemdb.com/prod/trial/lookup?upc={barcode}"),
-                };
-                using (var response = await client.SendAsync(request))
-                {
-                    response.EnsureSuccessStatusCode();
-                    var body = await response.Content.ReadAsStringAsync();
-                    Root test = JsonConvert.DeserializeObject<Root>(body);
-                    if (test != null && test.total > 0)
-                    {
-                        textBoxUPC.Text = test.items.First().upc;
-                        textBoxEAN.Text = test.items.First().ean;
-                        textBoxGTIN.Text = test.items.First().gtin;
-                        textBoxISBN.Text = test.items.First().isbn;
-                        textBoxMarque.Text = string.IsNullOrWhiteSpace(test.items.First().brand) ? textBoxMarque.Text : test.items.First().brand;
-                        textBoxModele.Text = string.IsNullOrWhiteSpace(test.items.First().model) ? textBoxModele.Text : test.items.First().model;
-                        textBoxProduit.Text = string.IsNullOrWhiteSpace(test.items.First().title) ? textBoxProduit.Text : test.items.First().title;
-                        if (currentPort.IsOpen)
-                            currentPort.Close();
-                    }
-                    else if (test != null)
-                    {
-                        textBoxUPC.Text = barcode;
-                        MessageBox.Show("Aucune information a été trouvée. Veuillez renseigner le reste des informations.", "Alerte", MessageBoxButtons.OK);
-                        if (currentPort.IsOpen)
-                            currentPort.Close();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
-                if (currentPort.IsOpen)
-                    currentPort.Close();
-                currentPort.Open();
-            }
-        }
-        private bool GetDataFromDB(string barcode)
-        {
-            try
-            {
-                Article article = Articles.FirstOrDefault(x =>
-                string.Compare(barcode, x.UPC) == 0 ||
-                string.Compare(barcode, x.EAN) == 0 ||
-                string.Compare(barcode, x.GTIN) == 0 ||
-                string.Compare(barcode, x.ISBN) == 0);
-
-                if (article == null && Action == StockAction.Achat)
-                {
-                    DialogResult result = MessageBox.Show("L'article n'est pas connu du système, voulez-vous l'ajouter ?", "Alerte", MessageBoxButtons.YesNo);
-                    if (result == DialogResult.Yes)
-                    {
-                        Action = StockAction.AchatAjout;
-                        labelArticleId.Text = (Articles.OrderByDescending(x => x.Id).First().Id + 1).ToString();
-                        textBoxQuantity.Text = string.IsNullOrWhiteSpace(textBoxQuantity.Text) ? "1" : textBoxQuantity.Text;
-                    }
-                }
-                else if (article == null)
-                    return false;
-
-                if (article != null && Action == StockAction.Ajout)
-                {
-                    Action = StockAction.MiseAJour;
-                    labelArticleId.Text = article.Id.ToString();
-                    textBoxQuantity.Text = "99";
-                }
-                if (Action == StockAction.Achat)
-                {
-                    labelArticleId.Text = article.Id.ToString();
-                }
-
-                if (Action == StockAction.Achat || Action == StockAction.Ajout)
-                {
-                    textBoxPrix.Text = article.Price.ToString();
-                }
-
-                if (Action == StockAction.MiseAJour)
-                {
-                    textBoxQuantity.Text = article.Quantity.ToString();
-                }
-                else if (Action == StockAction.AchatAjout)
-                    return false;
-
-                textBoxUPC.Text = article.UPC;
-                textBoxEAN.Text = article.EAN;
-                textBoxGTIN.Text = article.GTIN;
-                textBoxISBN.Text = article.ISBN;
-                textBoxMarque.Text = Marques.First(x => x.Id == article.MarqueId).Name;
-                textBoxModele.Text = Modeles.First(x => x.Id == article.ModeleId && x.MarqueId == article.MarqueId).Name;
-                textBoxProduit.Text = article.Name;
-                if (currentPort.IsOpen)
-                    currentPort.Close();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
-                if (currentPort.IsOpen)
-                    currentPort.Close();
-                currentPort.Open();
-                return false;
-            }
-        }
-
         private void buttonValidate_Click(object sender, EventArgs e)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(textBoxUPC.Text) &&
-                    string.IsNullOrWhiteSpace(textBoxEAN.Text) &&
-                    string.IsNullOrWhiteSpace(textBoxGTIN.Text) &&
-                    string.IsNullOrWhiteSpace(textBoxISBN.Text))
+                string codeRef = textBoxCodeRef.Text.Trim();
+                string produit = textBoxProduit.Text.Trim();
+                string prixText = textBoxPrix.Text.Trim();
+                string quantityText = textBoxQuantity.Text.Trim();
+                string productText = textBoxProduit.Text.Trim();
+
+                if (string.IsNullOrWhiteSpace(codeRef))
                 {
-                    MessageBox.Show("Veuillez renseigner un UPC, un EAN, un GTIN et/ou un ISBN.", "Alerte", MessageBoxButtons.OK);
-                    return;
-                }
-                if (string.IsNullOrWhiteSpace(textBoxPrix.Text) ||
-                    string.IsNullOrWhiteSpace(textBoxQuantity.Text))
-                {
-                    MessageBox.Show("Veuillez renseigner un prix et une quantité.", "Alerte", MessageBoxButtons.OK);
+                    MessageBox.Show("Veuillez renseigner un code de référence.", "Alerte", MessageBoxButtons.OK);
                     return;
                 }
 
-                string marqueName = textBoxMarque.Text;
-                Marque marque = Marques.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
-                if (marque == null)
+                if (string.IsNullOrWhiteSpace(prixText))
                 {
-                    marque = new Marque(Marques.OrderByDescending(x => x.Id).First().Id + 1, char.ToUpper(marqueName[0]) + marqueName.Substring(1));
-                    Marques.Add(marque);
-                    Tools.WriteLineTofile($"{marque.Id};{marque.Name}", Paths.MarquesDSPath, true);
-                }
-                string modeleName = textBoxModele.Text;
-                Modele modele = Modeles.FirstOrDefault(x => x.Name.ToLower() == modeleName.ToLower() && x.MarqueId == marque.Id);
-                if (modele == null && !string.IsNullOrWhiteSpace(modeleName))
-                {
-                    modele = new Modele(Modeles.OrderByDescending(x => x.Id).First().Id + 1, marque.Id, char.ToUpper(modeleName[0]) + modeleName.Substring(1));
-                    Modeles.Add(modele);
-                    Tools.WriteLineTofile($"{modele.Id};{modele.MarqueId};{modele.Name}", Paths.ModelesDSPath, true);
+                    MessageBox.Show("Veuillez renseigner un prix.", "Alerte", MessageBoxButtons.OK);
+                    return;
                 }
 
-                string upc = textBoxUPC.Text;
-                string ean = textBoxEAN.Text;
-                string gtin = textBoxGTIN.Text;
-                string isbn = textBoxISBN.Text;
-                string name = textBoxProduit.Text;
-                int? marqueId = marque?.Id;
-                int? modeleId = modele?.Id;
-                decimal prix = decimal.Parse(textBoxPrix.Text);
-                int quantity = int.Parse(textBoxQuantity.Text);
+                if (string.IsNullOrWhiteSpace(quantityText))
+                {
+                    MessageBox.Show("Veuillez renseigner une quantité.", "Alerte", MessageBoxButtons.OK);
+                    return;
+                }
+
+                string marqueName = textBoxMarque.Text.Trim();
+                Marque marque = null;
+                if (!string.IsNullOrWhiteSpace(marqueName))
+                {
+                    marque = Marques.FirstOrDefault(x =>
+                        string.Compare(x.Name.Trim().ToLowerInvariant(), marqueName.Trim().ToLowerInvariant(), true) == 0);
+                    if (marque == null)
+                    {
+                        (Marque marqueTmp, List<Marque> marques) = Services.AddNewMarque(marqueName, Marques);
+                        marque = marqueTmp;
+                        Marques = marques;
+                        ;
+                    }
+                }
+
+                string modeleName = textBoxModele.Text.Trim();
+                Modele modele = null;
+                if (marque != null && !string.IsNullOrWhiteSpace(modeleName))
+                {
+                    modele = Modeles.FirstOrDefault(x =>
+                        string.Compare(x.Name.Trim().ToLowerInvariant(), modeleName.Trim().ToLowerInvariant(), true) == 0 &&
+                        x.MarqueId == marque.Id);
+                    if (modele == null)
+                    {
+                        (Modele modeleTmp, List<Modele> modeles) = Services.AddNewModele(modeleName, marque.Id, Modeles);
+                        modele = modeleTmp;
+                        Modeles = modeles;
+                        ;
+                    }
+                }
+
                 int id = int.Parse(labelArticleId.Text);
+                decimal prix = decimal.Parse(prixText);
+                int quantity = int.Parse(quantityText);
 
-                Article = new Article()
+                Article existingArticle = Articles.FirstOrDefault(x => x.Id == id);
+                if (existingArticle == null)
                 {
-                    Id = id,
-                    UPC = upc,
-                    EAN = ean,
-                    GTIN = gtin,
-                    ISBN = isbn,
-                    Name = name,
-                    MarqueId = marqueId,
-                    ModeleId = modeleId,
-                    Price = prix,
-                    Quantity = quantity,
-                };
-                if (Action == StockAction.Achat)
-                {
-                    Articles.ForEach(x =>
-                    {
-                        if (x.Id == Article.Id)
-                        {
-                            x.Quantity -= Article.Quantity;
-                        }
-                    });
+                    (Article articleTmp, List<Marque> marques, List<Modele> modeles, List<Article> articles) = Services.AddNewArticle(
+                        marqueName
+                        , modeleName
+                        , codeRef
+                        , productText
+                        , prixText
+                        , Marques
+                        , Modeles
+                        , Articles);
+                    Article = articleTmp;
+                    Articles = articles;
+                    ;
                 }
-                else if (Action == StockAction.MiseAJour)
+                else
                 {
-                    Articles.ForEach(x =>
-                    {
-                        if (x.Id == Article.Id)
-                        {
-                            x.UPC = Article.UPC;
-                            x.EAN = Article.EAN;
-                            x.GTIN = Article.GTIN;
-                            x.ISBN = Article.ISBN;
-                            x.Name = Article.Name;
-                            x.MarqueId = Article.MarqueId;
-                            x.ModeleId = Article.ModeleId;
-                            x.Price = Article.Price;
-                            x.Quantity = Article.Quantity;
-                        }
-                    });
+                    Article = existingArticle;
+                    Article.Produit = produit;
+                    Article.MarqueId = marque?.Id;
+                    Article.ModeleId = modele?.Id;
+                    Article.Price = prix;
+                    Article.Quantity = quantity;
                 }
-                else if (Action == StockAction.AchatAjout)
-                {
-                    Articles.Add(Article);
-                }
+
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
@@ -327,7 +233,7 @@ namespace MobileExpress
             {
                 if (Action == StockAction.MiseAJour && Article != null)
                 {
-                    DialogResult dialogResult = MessageBox.Show($"Êtes-vous sûr(e) de vouloir supprimer l'article {Article.Name}.", "Alerte", MessageBoxButtons.YesNo);
+                    DialogResult dialogResult = MessageBox.Show($"Êtes-vous sûr(e) de vouloir supprimer l'article {Article.Produit}.", "Alerte", MessageBoxButtons.YesNo);
                     if (dialogResult == DialogResult.Yes)
                     {
                         Action = StockAction.Suppression;
@@ -337,12 +243,34 @@ namespace MobileExpress
                 }
                 else if (Article != null)
                 {
-                    MessageBox.Show($"Il vous est impossible de supprimer l'article {Article.Name} du stock car vous n'êtes pas dans le bon contexte.", "Alerte", MessageBoxButtons.OK);
+                    MessageBox.Show($"Il vous est impossible de supprimer l'article {Article.Produit} du stock car vous n'êtes pas dans le bon contexte.", "Alerte", MessageBoxButtons.OK);
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+            }
+        }
+        private void TextBoxMarque_TextChanged(object sender, EventArgs e)
+        {
+            string marqueName = textBoxMarque.Text.Trim().ToLower();
+
+            int? selectedMarqueId = Marques.FirstOrDefault(x => x.Name.Trim().ToLower() == marqueName)?.Id;
+
+            if (selectedMarqueId.HasValue)
+            {
+                string[] modeles = Modeles.Where(m => m.Id == selectedMarqueId.Value)?.Select(x => x.Name).ToArray();
+
+                if (modeles != null && modeles.Any())
+                {
+                    textBoxModele.AutoCompleteCustomSource.Clear();
+                    textBoxModele.AutoCompleteCustomSource.AddRange(modeles);
+                }
+                else
+                {
+                    textBoxModele.AutoCompleteCustomSource.Clear();
+                    textBoxModele.AutoCompleteCustomSource.AddRange(Modeles.Select(x => x.Name).ToArray());
+                }
             }
         }
     }

@@ -1,13 +1,35 @@
-﻿using System;
+﻿using Microsoft.Office.Interop.Word;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Ports;
 using System.Linq;
+using System.Net.Http;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
+using System.Timers;
+using System.Web.Mvc;
+using System.Web.Mvc.Html;
+using System.Web.UI.WebControls;
+using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using System.Xml.Linq;
+using Xceed.Document.NET;
+using static Common.Logging.Configuration.ArgUtils;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using Color = System.Drawing.Color;
 using ComboBox = System.Windows.Forms.ComboBox;
+using Control = System.Windows.Forms.Control;
+using DataTable = System.Data.DataTable;
 using TextBox = System.Windows.Forms.TextBox;
 
 namespace MobileExpress
@@ -24,12 +46,24 @@ namespace MobileExpress
         private List<Garantie> GarantiesTemp { get; set; } = new List<Garantie>();
         private List<Remise> RemisesTemp { get; set; } = new List<Remise>();
 
+        // Propriété publique pour accéder au TextBox depuis une autre classe
+        public TextBox ScannerBarcode { get; set; } = new TextBox();
+
+        #region Scanner
+        public delegate Article updateTextBoxScannerBarcodeDelegate(string barcode);
+        #endregion
+
         private Customer CurrentCustomer { get; set; }
         #endregion
 
         public FormMobileExpress()
         {
             InitializeComponent();
+
+            // Configuration du TextBox
+            ScannerBarcode.Visible = false; // Rend le TextBox invisible
+            // Ajout du TextBox au formulaire
+            this.Controls.Add(ScannerBarcode);
 
             tabControlAll.SelectedIndexChanged += new EventHandler(TabControllAll_SelectedIndexChanged);
             dataGridViewCustomerRelationAll.CellClick += new DataGridViewCellEventHandler(DataGridViewCustomerRelationAll_CellClick);
@@ -82,6 +116,8 @@ namespace MobileExpress
             dataGridViewAllCustomerRelation_Load(null);
             // Stock
             dataGridViewStock_Load(null);
+
+            InitializeScanner();
         }
 
         #region Initialisation des listes
@@ -188,16 +224,20 @@ namespace MobileExpress
                             string Nom = temp[3];
                             decimal Prix = decimal.Parse(temp[4].Replace('.', ','));
                             int Quantite = Int32.Parse(temp[5]);
-                            string UPC = temp[6];
-                            string EAN = temp[7];
-                            string GTIN = temp[8];
-                            string ISBN = temp[9];
-                            Article article = new Article(Id, MarqueId, ModeleId, Nom, Prix, Quantite, UPC, EAN, GTIN, ISBN);
+                            string CodeReference = temp[6];
+                            string DisplayText = $"{Nom}" +
+                                (MarqueId == null ? string.Empty : $" - {MarquesDS.FirstOrDefault(x => x.Id == MarqueId).Name}") +
+                                (ModeleId == null ? string.Empty : $" {ModelesDS.FirstOrDefault(x => x.Id == ModeleId && x.MarqueId == MarqueId)?.Name ?? string.Empty}") +
+                                (string.IsNullOrWhiteSpace(CodeReference) ? string.Empty : $" - {CodeReference}");
+                            Article article = new Article(Id, MarqueId, ModeleId, Nom, Prix, Quantite, CodeReference)
+                            {
+                                DisplayText = DisplayText
+                            };
                             items.Add(article);
                         }
                         rowIndex++;
                     }
-                    items = items.OrderBy(a => a.Name).ToList();
+                    items = items.OrderBy(a => a.Produit).ToList();
                     TakeOverTypesDS.ForEach(x => { if (x.Id == 2) { x.Articles = items; } });
                 }
             }
@@ -311,6 +351,7 @@ namespace MobileExpress
                                 int? repairTypeId = Tools.ToNullableInt(temp[7]);
                                 int? unlockTypeId = Tools.ToNullableInt(temp[8]);
                                 int? articleId = Tools.ToNullableInt(temp[9]);
+                                string displayText = null;
                                 int quantity = Int32.Parse(temp[10]);
                                 decimal price = decimal.Parse(temp[11]);
                                 int? monthsGarantie = Tools.ToNullableInt(temp[12]);
@@ -323,10 +364,18 @@ namespace MobileExpress
                                 TakeOverState state = Tools.GetEnumFromDescription<TakeOverState>(temp[19]);
                                 int id = Int32.Parse(temp[20]);
                                 bool verification = string.Compare("Oui", temp[21]) == 0;
-                                bool? optionGarantie = string.Compare("Oui", temp[22]) == 0;
+                                bool optionGarantie = string.Compare("Oui", temp[22]) == 0;
+                                Article article = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(x => x.Id == articleId);
+                                if (article != null)
+                                {
+                                    displayText = $"{article.Produit}" +
+                                        (marqueId == null ? string.Empty : $" - {MarquesDS.FirstOrDefault(x => x.Id == marqueId).Name}") +
+                                        (modeleId == null ? string.Empty : $" {ModelesDS.FirstOrDefault(x => x.Id == modeleId && x.MarqueId == marqueId)?.Name ?? string.Empty}") +
+                                        (string.IsNullOrWhiteSpace(article.CodeReference) ? string.Empty : $" - {article.CodeReference}");
+                                }
                                 MEDatasDS.Add(new MEData(
-                                    takeOverId, date, invoiceId, customerId, marqueId, modeleId, imei, repairTypeId, unlockTypeId, articleId,
-                                    quantity, price, monthsGarantie, optionGarantie, remise, accompte, resteDu, paid, total, paymentMode, state, id, verification));
+                                    takeOverId, date, invoiceId, customerId, marqueId, modeleId, imei, repairTypeId, unlockTypeId, articleId, displayText,
+                                    quantity, price, monthsGarantie, remise, accompte, resteDu, paid, total, paymentMode, state, id, verification, optionGarantie));
                             }
                         }
                         linenum++;
@@ -402,6 +451,218 @@ namespace MobileExpress
             InitializeReceipts();
             InitializeStock();
         }
+
+        private void InitializeScanner()
+        {
+            Services.InitializeScanner(this, new updateTextBoxScannerBarcodeDelegate(GetArticleFromBarcode));
+        }
+        private Article GetArticleFromBarcode(string txtFromScanner)
+        {
+            Article article = null;
+            if (tabControlAll.SelectedTab == tabPageTakeOver)
+            {
+                article = GetArticleFromBarcodeAchat(txtFromScanner);
+            }
+            else if (tabControlAll.SelectedTab == stockTabPage)
+            {
+                article = GetArticleFromBarcodeStock(txtFromScanner);
+            }
+            return article;
+        }
+        private Article GetArticleFromBarcodeAchat(string txtFromScanner)
+        {
+            Article article = null;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(txtFromScanner))
+                    return null;
+
+                if (tabControlTakeOver.SelectedTab != tabControlTakeOver.TabPages[2])
+                    tabControlTakeOver.SelectedTab = tabControlTakeOver.TabPages[2];
+
+                bool isArticleInStock = Services.CheckArticleInStock(txtFromScanner, TakeOverTypesDS.First(x => x.Id == 2).Articles);
+                bool isArticleInDataGridView = Services.CheckArticleInDataGridView(txtFromScanner, dataGridViewTakeOverAchat, 1);
+
+                if (!isArticleInStock)
+                {
+                    // si l'article n'est pas connu
+                    // - récupérer depuis barcode url
+                    if (Services.IsScannerOK)
+                        article = Services.GetBarcodeDataFromUrlAsync(txtFromScanner, MarquesDS, ModelesDS, TakeOverTypesDS).Result;
+                    // - form
+                    var articleForm = new ArticleForm(
+                            StockAction.Ajout
+                            , TakeOverTypesDS.First(x => x.Id == 2).Articles
+                            , MarquesDS
+                            , ModelesDS
+                            , txtFromScanner
+                            , article);
+                    articleForm.ShowDialog();
+                    (StockAction action, Article articleTmp, List<Article> articles, List<Marque> marques, List<Modele> modeles) =
+                        articleForm.GetResult();
+                    article = articleTmp;
+                    MarquesDS = marques;
+                    ModelesDS = modeles;
+                    TakeOverTypesDS.First(x => x.Id == 2).Articles = articles;
+                    ;
+
+                    isArticleInStock = true;
+                }
+                if (isArticleInStock)
+                {
+                    if (article == null)
+                    {
+                        article = TakeOverTypesDS.First(x => x.Id == 2).Articles.First(x => string.Compare(x.CodeReference.ToLowerInvariant(), txtFromScanner.ToLowerInvariant()) == 0);
+                    }
+
+                    if (!isArticleInDataGridView && article != null)
+                    {
+                        // si l'article est connu
+                        // mettre à jour la combobox colonne pour prendre en compte le nouvelle article
+                        // ajouter dans data grid view
+                        ((DataGridViewComboBoxColumn)dataGridViewTakeOverAchat.Columns["article"]).Items.Add(article.DisplayText);
+
+                        int index = dataGridViewTakeOverAchat.Rows.Add();
+
+                        SetCellValue(dataGridViewTakeOverAchat, "id", index, article.Id);
+                        SetCellValue(dataGridViewTakeOverAchat, "article", index, article.DisplayText);
+                        SetCellValue(dataGridViewTakeOverAchat, "quantity", index, 1);
+                        SetCellValue(dataGridViewTakeOverAchat, "price", index, article.Price);
+                        SetCellValue(dataGridViewTakeOverAchat, "garantie", index, false);
+                        SetCellValue(dataGridViewTakeOverAchat, "remise", index, false);
+
+                        ScannerBarcode.Clear();
+
+                        UpdateTotalPrice();
+                    }
+
+                    else if (isArticleInDataGridView && article != null)
+                    {
+                        // si l'article est connu + dans data grid view
+                        // incrémenter dans data grid view
+
+                        foreach (DataGridViewRow row in dataGridViewTakeOverAchat.Rows)
+                        {
+                            if (!row.IsNewRow) // incrément quantité
+                            {
+                                string articleName = row.Cells["article"].Value as string;
+                                int? quantityTmp = (row.Cells["quantity"].Value as int?);
+                                int quantity = quantityTmp.HasValue ? quantityTmp.Value + 1 : 1;
+                                if (!string.IsNullOrWhiteSpace(articleName) && articleName.Trim().ToLower().Contains(article.Produit.Trim().ToLower()))
+                                {
+                                    SetCellValue(dataGridViewTakeOverAchat, "quantity", row.Index, quantity);
+
+                                    ScannerBarcode.Clear();
+
+                                    UpdateTotalPrice();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+            }
+
+            return article;
+        }
+        private Article GetArticleFromBarcodeStock(string txtFromScanner)
+        {
+            
+            // sinon, si l'article est en stock
+            // - on ouvre l'article dans le formulaire
+            // - si c'est une sauvegarde
+            // -- on sauvegarde l'article dans le stock
+            // -- on recharge la liste
+            // - sinon, si c'est une supression
+            // -- on suprime l'article du stock
+            // -- on recharge la liste
+
+            Article article = null;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(txtFromScanner))
+                    return null;
+
+                if (txtFromScanner.Length == 0)
+                    return null;
+
+                bool isArticleInStock = Services.CheckArticleInStock(txtFromScanner, TakeOverTypesDS.First(x => x.Id == 2).Articles);
+                bool isArticleInDataGridView = Services.CheckArticleInDataGridView(txtFromScanner, dataGridViewStock, 1);
+
+                if (!isArticleInStock)
+                {
+                    // si l'article n'est pas en stock
+                    
+                    // - on recherche l'article par url
+                    if (Services.IsScannerOK)
+                        article = Services.GetBarcodeDataFromUrlAsync(txtFromScanner, MarquesDS, ModelesDS, TakeOverTypesDS).Result;
+
+                    // - on ouvre l'article dans le formulaire
+                    var articleForm = new ArticleForm(
+                            StockAction.Ajout
+                            , TakeOverTypesDS.First(x => x.Id == 2).Articles
+                            , MarquesDS
+                            , ModelesDS
+                            , txtFromScanner
+                            , article);
+                    articleForm.ShowDialog();
+                    (StockAction action, Article articleTmp, List<Article> articles, List<Marque> marques, List<Modele> modeles) =
+                        articleForm.GetResult();
+                    article = articleTmp;
+                    MarquesDS = marques;
+                    ModelesDS = modeles;
+                    TakeOverTypesDS.First(x => x.Id == 2).Articles = articles;
+
+                    // - on recharge la liste
+                    dataGridViewStock_Load(TakeOverTypesDS.First(x => x.Id == 2).Articles);
+
+                    ScannerBarcode.Clear();
+                }
+                else if (!isArticleInDataGridView)
+                {
+                    // - recharge de la tab
+                    dataGridViewStock_Load(TakeOverTypesDS.First(x => x.Id == 2).Articles);
+                    ScannerBarcode.Clear();
+                }
+                else if (isArticleInStock && isArticleInDataGridView)
+                {
+                    if (article == null)
+                    {
+                        article = TakeOverTypesDS.First(x => x.Id == 2).Articles.First(x => string.Compare(x.CodeReference.ToLowerInvariant(), txtFromScanner.ToLowerInvariant()) == 0);
+                    }
+
+                    // si l'article est connu + dans datagridview
+                    // - maj
+                    var articleForm = new ArticleForm(
+                        StockAction.MiseAJour
+                        , TakeOverTypesDS.First(x => x.Id == 2).Articles
+                        , MarquesDS
+                        , ModelesDS
+                        , txtFromScanner
+                        , article);
+                    articleForm.ShowDialog();
+                    (StockAction action, Article articleTmp, List<Article> articles, List<Marque> marques, List<Modele> modeles) =
+                        articleForm.GetResult();
+                    article = articleTmp;
+                    MarquesDS = marques;
+                    ModelesDS = modeles;
+                    TakeOverTypesDS.First(x => x.Id == 2).Articles = articles;
+                    // - recharge de la tab
+                    StockUpdateDatabase(article, action, true);
+
+                    ScannerBarcode.Clear();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+            }
+            return article;
+        }
+
         #endregion
 
         #region Initialisation des onglets
@@ -490,11 +751,6 @@ namespace MobileExpress
              */
         private void CleanDataGridViewRepair()
         {
-            //if (Controls.Contains(dataGridViewTakeOverRepair))
-            //{
-            //    Controls.Remove(dataGridViewTakeOverRepair);
-            //}
-
             this.dataGridViewTakeOverRepair.CellClick -= null;
             this.dataGridViewTakeOverRepair.CellBeginEdit -= null;
             this.dataGridViewTakeOverRepair.CellEndEdit -= null;
@@ -505,7 +761,6 @@ namespace MobileExpress
             dataGridViewTakeOverRepair.Columns.Clear();
 
             dataGridViewTakeOverRepair.DataSource = null;
-            //dataGridViewTakeOverRepair.Dock = DockStyle.Fill;
             dataGridViewTakeOverRepair.AutoGenerateColumns = false; // add this line to disable auto-generation of columns
 
             dataGridViewTakeOverRepair.Columns.Add(Services.TakeOverRepairIdColumn);
@@ -522,7 +777,6 @@ namespace MobileExpress
             this.dataGridViewTakeOverRepair.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverRepair_CellEndEdit);
             this.dataGridViewTakeOverRepair.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverRepair_CurrentCellDirtyStateChanged);
             this.dataGridViewTakeOverRepair.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverRepair_EditingControlShowing);
-            //Controls.Add(dataGridViewTakeOverRepair);
         }
         private void CleanDataGridViewUnlock()
         {
@@ -562,40 +816,44 @@ namespace MobileExpress
         }
         private void CleanDataGridViewAchat()
         {
-            //if (Controls.Contains(dataGridViewTakeOverAchat))
-            //{
-            //    Controls.Remove(dataGridViewTakeOverAchat);
-            //}
+            try
+            {
+                this.dataGridViewTakeOverAchat.CellClick -= null;
+                this.dataGridViewTakeOverAchat.CellBeginEdit -= null;
+                this.dataGridViewTakeOverAchat.CurrentCellDirtyStateChanged -= null;
+                this.dataGridViewTakeOverAchat.EditingControlShowing -= null;
+                this.dataGridViewTakeOverAchat.CellValueChanged -= null;
 
-            this.dataGridViewTakeOverAchat.CellClick -= null;
-            this.dataGridViewTakeOverAchat.CellBeginEdit -= null;
-            this.dataGridViewTakeOverAchat.CellEndEdit -= null;
-            this.dataGridViewTakeOverAchat.CurrentCellDirtyStateChanged -= null;
-            this.dataGridViewTakeOverAchat.EditingControlShowing -= null;
+                dataGridViewTakeOverAchat.Rows.Clear();
+                dataGridViewTakeOverAchat.Columns.Clear();
 
-            dataGridViewTakeOverAchat.Rows.Clear();
-            dataGridViewTakeOverAchat.Columns.Clear();
+                dataGridViewTakeOverAchat.DataSource = null;
+                dataGridViewTakeOverAchat.AutoGenerateColumns = false;
 
-            dataGridViewTakeOverAchat.DataSource = null;
-            //dataGridViewTakeOverAchat.Dock = DockStyle.Fill;
-            dataGridViewTakeOverAchat.AutoGenerateColumns = false; // add this line to disable auto-generation of columns
+                dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatIdColumn);
+                DataGridViewComboBoxColumn articleComboboxColumn = Services.TakeOverAchatArticleCColumn;
+                dataGridViewTakeOverAchat.Columns.Add(articleComboboxColumn);
+                articleComboboxColumn.Items.Clear();
+                foreach (string item in TakeOverTypesDS.First(x => x.Id == 2).Articles.Select(x => x.DisplayText))
+                {
+                    articleComboboxColumn.Items.Add(item);
+                }
+                dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatQuantityColumn);
+                dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatPriceColumn);
+                dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatGarantieColumn);
+                dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatRemiseColumn);
+                dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatDeleteColumn);
 
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatIdColumn);
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatMarqueColumn);
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatModeleColumn);
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatArticleColumn);
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatQuantityColumn);
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatPriceColumn);
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatGarantieColumn);
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatRemiseColumn);
-            dataGridViewTakeOverAchat.Columns.Add(Services.TakeOverAchatDeleteColumn);
-
-            this.dataGridViewTakeOverAchat.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellClick);
-            this.dataGridViewTakeOverAchat.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverAchat_CellBeginEdit);
-            this.dataGridViewTakeOverAchat.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellEndEdit);
-            this.dataGridViewTakeOverAchat.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverAchat_CurrentCellDirtyStateChanged);
-            this.dataGridViewTakeOverAchat.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverAchat_EditingControlShowing);
-            //Controls.Add(dataGridViewTakeOverAchat);
+                this.dataGridViewTakeOverAchat.CurrentCellDirtyStateChanged += new System.EventHandler(this.DataGridViewTakeOverAchat_CurrentCellDirtyStateChanged);
+                this.dataGridViewTakeOverAchat.EditingControlShowing += new DataGridViewEditingControlShowingEventHandler(this.DataGridViewTakeOverAchat_EditingControlShowing);
+                this.dataGridViewTakeOverAchat.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellClick);
+                this.dataGridViewTakeOverAchat.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridViewTakeOverAchat_CellBeginEdit);
+                this.dataGridViewTakeOverAchat.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewTakeOverAchat_CellValueChanged);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+            }
         }
         private void takeOverRepair_Load(List<MEData> mEDatas)
         {
@@ -809,60 +1067,12 @@ namespace MobileExpress
 
                         dataGridViewTakeOverAchat.Rows.Add();
 
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["id", index]).Value = mEData.Id;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl idTextBoxControl)
-                        {
-                            idTextBoxControl.Text = mEData.Id.ToString();
-                        }
-
-                        Marque marque = null;
-                        if (mEData.MarqueId.HasValue)
-                        {
-                            marque = MarquesDS.First(x => x.Id == mEData.MarqueId.Value);
-                        }
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["marque", index]).Value = marque?.Name ?? string.Empty;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl marqueTextBoxControl)
-                        {
-                            marqueTextBoxControl.Text = marque?.Name ?? string.Empty;
-                        }
-
-                        Modele modele = null;
-                        if (mEData.ModeleId.HasValue)
-                        {
-                            modele = ModelesDS.First(x => x.Id == mEData.ModeleId.Value);
-                        }
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["modele", index]).Value = modele?.Name ?? string.Empty;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl modeleTextBoxControl)
-                        {
-                            modeleTextBoxControl.Text = modele?.Name ?? string.Empty;
-                        }
-
-                        Article article = null;
-                        if (mEData.ArticleId.HasValue)
-                        {
-                            article = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(x => x.Id == mEData.ArticleId.Value);
-                        }
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["article", index]).Value = article?.Name ?? string.Empty;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl articleTextBoxControl)
-                        {
-                            articleTextBoxControl.Text = article?.Name ?? string.Empty;
-                        }
-
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["quantity", index]).Value = mEData.Quantity;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl quantityTextBoxControl)
-                        {
-                            quantityTextBoxControl.Text = mEData.Quantity.ToString();
-                        }
-
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["price", index]).Value = mEData.Price;
-                        if (dataGridViewTakeOverAchat.EditingControl is DataGridViewTextBoxEditingControl priceTextBoxControl)
-                        {
-                            priceTextBoxControl.Text = mEData.Price.ToString();
-                        }
-
-                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["garantie", index]).Value = mEData.Garantie.HasValue && mEData.Garantie.Value > 0;
-
-                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["remise", index]).Value = mEData.Remise.HasValue && mEData.Remise.Value > 0;
+                        SetCellValue(dataGridViewTakeOverAchat, "id", index, mEData.Id);
+                        SetCellValue(dataGridViewTakeOverAchat, "article", index, mEData.Displaytext);
+                        SetCellValue(dataGridViewTakeOverAchat, "quantity", index, mEData.Quantity);
+                        SetCellValue(dataGridViewTakeOverAchat, "price", index, mEData.Price);
+                        SetCellValue(dataGridViewTakeOverAchat, "garantie", index, mEData.Garantie.HasValue && mEData.Garantie.Value > 0);
+                        SetCellValue(dataGridViewTakeOverAchat, "remise", index, mEData.Remise.HasValue && mEData.Remise.Value > 0);
 
                         textBoxTakeOverAccompte.Text = mEData.Accompte.ToString();
                         textBoxTakeOverResteDu.Text = mEData.ResteDu.ToString();
@@ -880,6 +1090,26 @@ namespace MobileExpress
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+            }
+        }
+        // Méthode générique pour définir la valeur d'une cellule dans le DataGridView
+        private void SetCellValue<T>(DataGridView dataGridView, string columnName, int rowIndex, T value)
+        {
+            try
+            {
+                DataGridViewCell cell = dataGridView[columnName, rowIndex];
+                if (cell != null && value != null)
+                {
+                    cell.Value = value;
+                    if (dataGridView.EditingControl is Control editingControl)
+                    {
+                        editingControl.Text = value.ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Une erreur est survenue. Erreur à remonter : {ex.StackTrace}", "Erreur", MessageBoxButtons.OK);
             }
         }
 
@@ -1036,7 +1266,7 @@ namespace MobileExpress
 
                         string item = x.RepairTypeId.HasValue ? TakeOverTypesDS.First(t => t.Id == 0).RepairTypes.First(t => t.Id == x.RepairTypeId).Name :
                             x.UnlockTypeId.HasValue ? TakeOverTypesDS.First(t => t.Id == 1).UnlockTypes.First(t => t.Id == x.UnlockTypeId).Name :
-                            TakeOverTypesDS.First(t => t.Id == 2).Articles.First(t => t.Id == x.ArticleId).Name;
+                            TakeOverTypesDS.First(t => t.Id == 2).Articles.First(t => t.Id == x.ArticleId).Produit;
 
                         string restedu = x.ResteDu == 0 && x.Total > 0 ? "Payé" : x.ResteDu.ToString();
 
@@ -1110,8 +1340,18 @@ namespace MobileExpress
 
                             string path = Paths.ReceiptDSPath;
 
-                            List<string> items = new List<string>() { "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;Quantité;Prix;Garantie;Remise;Accompte;Reste dû;Payé;Total;Numéro de mode de paiement;Etat;Id;Vérification" };
-                            items.AddRange(MEDatasDS.Select(x => $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};{x.Id};{(x.Verification ? "Oui" : "Non")}"));
+                            List<string> items = new List<string>() {
+                                "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;" +
+                                "Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;" +
+                                "Quantité;Prix;Garantie;Remise;Accompte;" +
+                                "Reste dû;Payé;Total;Numéro de mode de paiement;Etat;" +
+                                "Id;Vérification;Option de garantie" };
+                            items.AddRange(MEDatasDS.Select(x =>
+                                $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};" +
+                                $"{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};" +
+                                $"{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};" +
+                                $"{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};" +
+                                $"{x.Id};{(x.Verification ? "Oui" : "Non")};{(x.OptionGarantie ? "Oui" : "Non")}"));
                             Tools.RewriteDataToFile(items, path, false);
 
                             InitializeAll();
@@ -1148,38 +1388,14 @@ namespace MobileExpress
                     ReadOnly = true,
                 };
                 dataGridViewStock.Columns.Add(textBoxId);
-                DataGridViewTextBoxColumn textBoxUPC = new DataGridViewTextBoxColumn()
+                DataGridViewTextBoxColumn textBoxCodeRef = new DataGridViewTextBoxColumn()
                 {
-                    HeaderText = "UPC",
-                    Name = "textBoxStockUPC",
+                    HeaderText = "Code de référence",
+                    Name = "textBoxStockCodeRef",
                     AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
                     ReadOnly = true,
                 };
-                dataGridViewStock.Columns.Add(textBoxUPC);
-                DataGridViewTextBoxColumn textBoxEAN = new DataGridViewTextBoxColumn()
-                {
-                    HeaderText = "EAN",
-                    Name = "textBoxStockEAN",
-                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                    ReadOnly = true,
-                };
-                dataGridViewStock.Columns.Add(textBoxEAN);
-                DataGridViewTextBoxColumn textBoxGTIN = new DataGridViewTextBoxColumn()
-                {
-                    HeaderText = "GTIN",
-                    Name = "textBoxStockGTIN",
-                    ReadOnly = true,
-                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                };
-                dataGridViewStock.Columns.Add(textBoxGTIN);
-                DataGridViewTextBoxColumn textBoxISBN = new DataGridViewTextBoxColumn()
-                {
-                    HeaderText = "ISBN",
-                    Name = "textBoxStockISBN",
-                    ReadOnly = true,
-                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                };
-                dataGridViewStock.Columns.Add(textBoxISBN);
+                dataGridViewStock.Columns.Add(textBoxCodeRef);
                 DataGridViewTextBoxColumn textBoxMarque = new DataGridViewTextBoxColumn()
                 {
                     HeaderText = "Marque",
@@ -1196,14 +1412,14 @@ namespace MobileExpress
                     AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
                 };
                 dataGridViewStock.Columns.Add(textBoxModele);
-                DataGridViewTextBoxColumn textBoxName = new DataGridViewTextBoxColumn()
+                DataGridViewTextBoxColumn textBoxProduit = new DataGridViewTextBoxColumn()
                 {
-                    HeaderText = "Nom",
-                    Name = "textBoxStockName",
+                    HeaderText = "Produit",
+                    Name = "textBoxStockProduit",
                     ReadOnly = true,
                     AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
                 };
-                dataGridViewStock.Columns.Add(textBoxName);
+                dataGridViewStock.Columns.Add(textBoxProduit);
                 DataGridViewTextBoxColumn textBoxPrice = new DataGridViewTextBoxColumn()
                 {
                     HeaderText = "Prix",
@@ -1238,29 +1454,11 @@ namespace MobileExpress
                     {
                         idTextBoxControl.Text = article.Id.ToString();
                     }
-                    DataGridViewTextBoxCell upcTextBoxCell = (DataGridViewTextBoxCell)dataGridViewStock.Rows[index].Cells["textBoxStockUPC"];
-                    upcTextBoxCell.Value = article.UPC;
-                    if (dataGridViewStock.EditingControl is DataGridViewTextBoxEditingControl upcTextBoxControl)
+                    DataGridViewTextBoxCell codeRefTextBoxCell = (DataGridViewTextBoxCell)dataGridViewStock.Rows[index].Cells["textBoxStockCodeRef"];
+                    codeRefTextBoxCell.Value = article.CodeReference;
+                    if (dataGridViewStock.EditingControl is DataGridViewTextBoxEditingControl codeRefTextBoxControl)
                     {
-                        upcTextBoxControl.Text = article.UPC;
-                    }
-                    DataGridViewTextBoxCell eanTextBoxCell = (DataGridViewTextBoxCell)dataGridViewStock.Rows[index].Cells["textBoxStockEAN"];
-                    eanTextBoxCell.Value = article.EAN;
-                    if (dataGridViewStock.EditingControl is DataGridViewTextBoxEditingControl eanTextBoxControl)
-                    {
-                        eanTextBoxControl.Text = article.EAN;
-                    }
-                    DataGridViewTextBoxCell gtinTextBoxCell = (DataGridViewTextBoxCell)dataGridViewStock.Rows[index].Cells["textBoxStockGTIN"];
-                    gtinTextBoxCell.Value = article.GTIN;
-                    if (dataGridViewStock.EditingControl is DataGridViewTextBoxEditingControl gtinTextBoxControl)
-                    {
-                        gtinTextBoxControl.Text = article.GTIN;
-                    }
-                    DataGridViewTextBoxCell isbnTextBoxCell = (DataGridViewTextBoxCell)dataGridViewStock.Rows[index].Cells["textBoxStockISBN"];
-                    isbnTextBoxCell.Value = article.ISBN;
-                    if (dataGridViewStock.EditingControl is DataGridViewTextBoxEditingControl isbnTextBoxControl)
-                    {
-                        isbnTextBoxControl.Text = article.ISBN;
+                        codeRefTextBoxControl.Text = article.CodeReference;
                     }
 
                     Marque marque = null;
@@ -1287,11 +1485,11 @@ namespace MobileExpress
                         }
                     }
 
-                    DataGridViewTextBoxCell nameTextBoxCell = (DataGridViewTextBoxCell)dataGridViewStock.Rows[index].Cells["textBoxStockName"];
-                    nameTextBoxCell.Value = article.Name;
+                    DataGridViewTextBoxCell nameTextBoxCell = (DataGridViewTextBoxCell)dataGridViewStock.Rows[index].Cells["textBoxStockProduit"];
+                    nameTextBoxCell.Value = article.Produit;
                     if (dataGridViewStock.EditingControl is DataGridViewTextBoxEditingControl nameTextBoxControl)
                     {
-                        nameTextBoxControl.Text = article.Name;
+                        nameTextBoxControl.Text = article.Produit;
                     }
 
                     DataGridViewTextBoxCell priceTextBoxCell = (DataGridViewTextBoxCell)dataGridViewStock.Rows[index].Cells["textBoxStockPrice"];
@@ -1322,19 +1520,6 @@ namespace MobileExpress
         private void TabControllAll_SelectedIndexChanged(object sender, EventArgs e)
         {
             InitializeAll();
-            if (tabControlAll.SelectedTab == tabPageTakeOver)
-            {
-                InitializeAll();
-            }
-            else if (tabControlAll.SelectedTab == customerRelationTabPage)
-            {
-                InitializeAll();
-            }
-            else if (tabControlAll.SelectedTab == stockTabPage)
-            {
-                dataGridViewStock.ClearSelection();
-                InitializeAll();
-            }
         }
         // TakeOver
         private void buttonAddCustomer_Click(object sender, EventArgs e)
@@ -1506,9 +1691,9 @@ namespace MobileExpress
                         string marqueText = marque?.Name;
                         string modeleText = modele?.Name;
                         string productName =
-                            !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Name) :
-                            !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Name) :
-                            (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Name);
+                            !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Produit) :
+                            !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Produit) :
+                            (produitRepair?.Name ?? produitUnlock?.Name ?? produitArticle.Produit);
 
                         if (mEData.Garantie.HasValue)
                         {
@@ -1518,7 +1703,7 @@ namespace MobileExpress
                                 tabName: tabName,
                                 productName: productName,
                                 months: mEData.Garantie.Value,
-                                option: mEData.GarantieOption ?? false));
+                                option: mEData.OptionGarantie));
                         }
                         if (mEData.Remise.HasValue)
                         {
@@ -1622,8 +1807,18 @@ namespace MobileExpress
 
                     // Code pour générer et sauvegarder les données dans un fichier
                     string path = Paths.ReceiptDSPath;
-                    List<string> items = new List<string>() { "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;Quantité;Prix;Garantie;Remise;Accompte;Reste dû;Payé;Total;Numéro de mode de paiement;Etat;Id;Vérification" };
-                    items.AddRange(MEDatasDS.Select(x => $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};{x.Id};{(x.Verification ? "Oui" : "Non")}"));
+                    List<string> items = new List<string>() {
+                        "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;" +
+                        "Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;" +
+                        "Quantité;Prix;Garantie;Remise;Accompte;" +
+                        "Reste dû;Payé;Total;Numéro de mode de paiement;Etat;" +
+                        "Id;Vérification;Option de garantie" };
+                    items.AddRange(MEDatasDS.Select(x =>
+                        $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};" +
+                        $"{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};" +
+                        $"{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};" +
+                        $"{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};" +
+                        $"{x.Id};{(x.Verification ? "Oui" : "Non")};{(x.OptionGarantie ? "Oui" : "Non")}"));
                     Tools.RewriteDataToFile(items, path, false);
 
                     string type = GetItemTypeDescription(mEDatas);
@@ -1636,7 +1831,7 @@ namespace MobileExpress
                         GeneratePriseEnCharge(type, mEDatas, takeOverCustomer, takeOverId, date, repairTypeNames, unlockTypeNames, articles, marques, modeles, accompte, paid);
                     }
 
-                    InitializeReceipts();
+                    InitializeAll();
                 }
                 else
                 {
@@ -1700,8 +1895,18 @@ namespace MobileExpress
 
                         string path = Paths.ReceiptDSPath;
 
-                        List<string> items = new List<string>() { "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;Quantité;Prix;Garantie;Remise;Accompte;Reste dû;Payé;Total;Numéro de mode de paiement;Etat;Id;Vérification" };
-                        items.AddRange(MEDatasDS.Select(x => $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};{x.Id};{(x.Verification ? "Oui" : "Non")}"));
+                        List<string> items = new List<string>() {
+                            "Numéro de prise en charge;Date;Numéro de facture;Numéro du client;Numéro de la marque;" +
+                            "Numéro du modèle;IMEI;Numéro du type de réparation;Numéro du type de déblocage;Numéro de l'article;" +
+                            "Quantité;Prix;Garantie;Remise;Accompte;" +
+                            "Reste dû;Payé;Total;Numéro de mode de paiement;Etat;" +
+                            "Id;Vérification;Option de garantie" };
+                        items.AddRange(MEDatasDS.Select(x =>
+                        $"{x.TakeOverId};{x.Date};{x.InvoiceId};{x.CustomerId};{x.MarqueId};" +
+                        $"{x.ModeleId};{x.IMEI};{x.RepairTypeId};{x.UnlockTypeId};{x.ArticleId};" +
+                        $"{x.Quantity};{x.Price};{x.Garantie};{x.Remise};{x.Accompte};" +
+                        $"{x.ResteDu};{x.Paid};{x.Total};{Tools.GetEnumDescriptionFromEnum<PaymentMode>(x.PaymentMode)};{Tools.GetEnumDescriptionFromEnum<TakeOverState>(x.State)};" +
+                        $"{x.Id};{(x.Verification ? "Oui" : "Non")};{(x.OptionGarantie ? "Oui" : "Non")}"));
                         Tools.RewriteDataToFile(items, path, false);
 
                         decimal payeAFacturer = factureACreer.First().Paid.Value;
@@ -1724,15 +1929,15 @@ namespace MobileExpress
                             RepairType repairType = TakeOverTypesDS.FirstOrDefault(x => x.Id == 0).RepairTypes.FirstOrDefault(x => x.Id == afacturer.RepairTypeId);
                             if (repairType != null)
                             {
-                                if (!repairTypeNames.Any(x => x.Key == repairType.Id))
+                                if (repairType != null && !repairTypeNames.Any(x => x.Key == repairType.Id))
                                 {
                                     repairTypeNames.Add(repairType.Id, repairType.Name);
                                 }
-                                if (!marques.Any(x => x.Key == marque.Id))
+                                if (marque != null && !marques.Any(x => x.Key == marque.Id))
                                 {
                                     marques.Add(marque.Id, marque.Name);
                                 }
-                                if (!modeles.Any(x => x.Key == modele.Id))
+                                if (modele != null && !modeles.Any(x => x.Key == modele.Id))
                                 {
                                     modeles.Add(modele.Id, modele.Name);
                                 }
@@ -1741,15 +1946,15 @@ namespace MobileExpress
                             UnlockType unlockType = TakeOverTypesDS.FirstOrDefault(x => x.Id == 1).UnlockTypes.FirstOrDefault(x => x.Id == afacturer.UnlockTypeId);
                             if (unlockType != null)
                             {
-                                if (!unlockTypeNames.Any(x => x.Key == unlockType.Id))
+                                if (unlockType != null && !unlockTypeNames.Any(x => x.Key == unlockType.Id))
                                 {
                                     unlockTypeNames.Add(unlockType.Id, unlockType.Name);
                                 }
-                                if (!marques.Any(x => x.Key == marque.Id))
+                                if (marque != null && !marques.Any(x => x.Key == marque.Id))
                                 {
                                     marques.Add(marque.Id, marque.Name);
                                 }
-                                if (!modeles.Any(x => x.Key == modele.Id))
+                                if (modele != null && !modeles.Any(x => x.Key == modele.Id))
                                 {
                                     modeles.Add(modele.Id, modele.Name);
                                 }
@@ -1758,15 +1963,15 @@ namespace MobileExpress
                             Article article = TakeOverTypesDS.FirstOrDefault(x => x.Id == 2).Articles.FirstOrDefault(x => x.Id == afacturer.ArticleId);
                             if (article != null)
                             {
-                                if (!articles.Any(x => x.Key == article.Id))
+                                if (article != null && !articles.Any(x => x.Key == article.Id))
                                 {
-                                    articles.Add(article.Id, article.Name);
+                                    articles.Add(article.Id, article.Produit);
                                 }
-                                if (!marques.Any(x => x.Key == marque.Id))
+                                if (marque != null && !marques.Any(x => x.Key == marque.Id))
                                 {
                                     marques.Add(marque.Id, marque.Name);
                                 }
-                                if (!modeles.Any(x => x.Key == modele.Id))
+                                if (modele != null && !modeles.Any(x => x.Key == modele.Id))
                                 {
                                     modeles.Add(modele.Id, modele.Name);
                                 }
@@ -1893,29 +2098,54 @@ namespace MobileExpress
         }
         private void ProcessDataGridViewRow(int type, DataGridViewRow row, ref List<MEData> mEDatas, ref Dictionary<int, string> repairTypeNames, ref Dictionary<int, string> unlockTypeNames, ref Dictionary<int, string> articles, ref Dictionary<int, string> marques, ref Dictionary<int, string> modeles, int takeOverId, DateTime date, Customer takeOverCustomer, decimal accompte, decimal resteDu, decimal paid, decimal total, PaymentMode paymentMode)
         {
-            if (!row.IsNewRow)
+            try
             {
-                int id = (int)row.Cells["id"].Value;
-                string marqueText = row.Cells["marque"].Value as string;
-                string modeleText = row.Cells["modele"].Value as string;
-                string typeText = row.Cells[type == 2 ? "article" : "type"].Value as string;
-                decimal? price = row.Cells["price"].Value as decimal?;
-                int quantity = type == 2 ? (row.Cells["quantity"].Value as int?).Value : 1;
-                bool? isGarantie = (bool?)row.Cells["garantie"].Value;
+                if (row.IsNewRow)
+                    return;
 
-                Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueText?.ToLower()) == 0);
-                Modele modele = ModelesDS.FirstOrDefault(x => x.MarqueId == (marque?.Id ?? 0) && string.Compare(x.Name.ToLower(), modeleText?.ToLower()) == 0);
-                RepairType repairType = TakeOverTypesDS.First(x => x.Id == 0).RepairTypes
-                    .FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0);
-                UnlockType unlockType = TakeOverTypesDS.First(x => x.Id == 1).UnlockTypes
-                    .FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0);
-                Article article = TakeOverTypesDS.First(x => x.Id == 2).Articles
-                    .FirstOrDefault(x =>
-                        (marque.Id == x.MarqueId && modele.Id == x.Id && string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0) ||
-                        (marque.Id == x.MarqueId && string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0) ||
-                        (string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0));
+                int id = (int)row.Cells["id"].Value;
+                Marque marque = null;
+                Modele modele = null;
+                Article article = null;
+                RepairType repairType = null;
+                UnlockType unlockType = null;
+                string typeText = null;
+                bool? isGarantie = (bool?)row.Cells["garantie"].Value;
+                decimal? price = row.Cells["price"].Value as decimal?;
+                int quantity = 1;
+
+                if (type == 2)
+                {
+                    string articleName = row.Cells["article"].Value as string;
+                    article = TakeOverTypesDS
+                        .First(x => x.Id == 2).Articles
+                        .FirstOrDefault(a => string.Compare(articleName,
+                            $"{Services.GetPropertyValue(a, "Produit")}" +
+                            (a.MarqueId == null ? string.Empty : $" - {MarquesDS.FirstOrDefault(x => x.Id == a.MarqueId).Name}") +
+                            (a.ModeleId == null ? string.Empty : $" {ModelesDS.FirstOrDefault(x => x.Id == a.ModeleId && x.MarqueId == a.MarqueId)?.Name ?? string.Empty}") +
+                            (string.IsNullOrWhiteSpace(a.CodeReference) ? string.Empty : $" - {Services.GetPropertyValue(a, "CodeReference")}")) == 0);
+                    marque = MarquesDS.FirstOrDefault(x => article.MarqueId == x.Id);
+                    modele = ModelesDS.FirstOrDefault(x => article.MarqueId == x.MarqueId && article.ModeleId == x.Id);
+                    quantity = (row.Cells["quantity"].Value as int?).Value;
+                }
+                else
+                {
+                    typeText = row.Cells["type"].Value as string;
+                    string marqueText = row.Cells["marque"].Value as string;
+                    string modeleText = row.Cells["modele"].Value as string;
+                    marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueText?.ToLower()) == 0);
+                    modele = ModelesDS.FirstOrDefault(x => x.MarqueId == (marque?.Id ?? 0) && string.Compare(x.Name.ToLower(), modeleText?.ToLower()) == 0);
+                    repairType = TakeOverTypesDS.First(x => x.Id == 0).RepairTypes
+                        .FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0);
+                    unlockType = TakeOverTypesDS.First(x => x.Id == 1).UnlockTypes
+                        .FirstOrDefault(x => string.Compare(x.Name.ToLower(), typeText?.ToLower()) == 0);
+                }
 
                 ProcessRowData(row, ref mEDatas, ref repairTypeNames, ref unlockTypeNames, ref articles, ref marques, ref modeles, takeOverId, date, takeOverCustomer, accompte, resteDu, paid, total, paymentMode, id, marque, modele, repairType, unlockType, article, price, quantity, isGarantie);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
         private void ProcessRowData(DataGridViewRow row, ref List<MEData> mEDatas, ref Dictionary<int, string> repairTypeNames, ref Dictionary<int, string> unlockTypeNames, ref Dictionary<int, string> articles, ref Dictionary<int, string> marques, ref Dictionary<int, string> modeles, int takeOverId, DateTime date, Customer takeOverCustomer, decimal accompte, decimal resteDu, decimal paid, decimal total, PaymentMode paymentMode, int id, Marque marque, Modele modele, RepairType repairType, UnlockType unlockType, Article article, decimal? price, int quantity, bool? isGarantie)
@@ -1932,7 +2162,7 @@ namespace MobileExpress
                 }
                 if (article != null && !articles.ContainsKey(article.Id))
                 {
-                    articles.Add(article.Id, article.Name);
+                    articles.Add(article.Id, article.Produit);
                 }
 
                 if (marque != null && !marques.ContainsKey(marque.Id))
@@ -1950,9 +2180,9 @@ namespace MobileExpress
                 MEData newTakeOver = new MEData(
                     takeOverId, date, null, takeOverCustomer.Id, marque?.Id,
                     modele?.Id, null, repairType?.Id, unlockType?.Id, article?.Id,
-                    quantity, price, garantie == null ? null : garantie.Months, garantie == null ? null : garantie.Option, null,
+                    article.DisplayText, quantity, price, garantie?.Months, null,
                     accompte, resteDu, paid, total, paymentMode,
-                    TakeOverState.InProgress, id, false);
+                    TakeOverState.InProgress, id, false, garantie?.Option ?? false);
 
                 mEDatas.Add(newTakeOver);
             }
@@ -1968,7 +2198,7 @@ namespace MobileExpress
                 using (GarantieForm dialog = new GarantieForm(GarantiesTemp))
                 {
                     // Afficher la boîte de dialogue modale
-                    if (dialog.ShowDialog() == DialogResult.OK)
+                    if (!dialog.IsDisposed && dialog.ShowDialog() == DialogResult.OK)
                     {
                         // Récupérer les éléments cochés
                         GarantiesTemp = dialog.GetResult().ToList();
@@ -2017,77 +2247,6 @@ namespace MobileExpress
                             }
                         }
                         UpdateTotalPrice();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
-            }
-        }
-        private void ButtonTakeOverScanner_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                using (ArticleForm dialog = new ArticleForm(StockAction.Achat, null, TakeOverTypesDS.First(x => x.Id == 2).Articles, MarquesDS, ModelesDS))
-                {
-                    // Afficher la boîte de dialogue modale
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                    {
-                        (StockAction action, Article articleToBuy, List<Article> articles, List<Marque> marques, List<Modele> modeles) = dialog.GetResult();
-                        TakeOverTypesDS.First(x => x.Id == 2).Articles = articles;
-                        MarquesDS = marques;
-                        ModelesDS = modeles;
-                        if (action == StockAction.AchatAjout)
-                        {
-                            int oldQuantity = articleToBuy.Quantity;
-                            articleToBuy.Quantity = 99;
-                            StockUpdateDatabase(articleToBuy, -1);
-                            articleToBuy.Quantity = oldQuantity;
-                        }
-                        Article articleToUpdate = TakeOverTypesDS.First(x => x.Id == 2).Articles.First(y => y.Id == articleToBuy.Id);
-                        if (action != StockAction.Achat)
-                        {
-                            articleToUpdate.Quantity -= articleToBuy.Quantity;
-                        }
-
-                        dataGridViewTakeOverAchat.Rows.Add();
-
-                        // récupérer le dernier row index vide
-                        int index = 0;
-                        foreach (DataGridViewRow row in dataGridViewTakeOverAchat.Rows)
-                        {
-                            if (row.IsNewRow || !(row.Cells["id"].Value as int?).HasValue)
-                                break;
-                            index++;
-                        }
-
-                        // remplir dataGridViewTakeOverAchat.Rows[dernierRowIndexVide]
-                        int id = GetItemId();
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["id", index]).Value = id;
-
-                        Marque marque = null;
-                        if (articleToBuy.MarqueId.HasValue)
-                        {
-                            marque = MarquesDS.First(x => x.Id == articleToBuy.MarqueId.Value);
-                        }
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["marque", index]).Value = marque?.Name ?? string.Empty;
-
-                        Modele modele = null;
-                        if (articleToBuy.ModeleId.HasValue)
-                        {
-                            modele = ModelesDS.First(x => x.Id == articleToBuy.ModeleId.Value);
-                        }
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["modele", index]).Value = modele?.Name ?? string.Empty;
-
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["article", index]).Value = articleToBuy.Name;
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["quantity", index]).Value = articleToBuy.Quantity;
-                        ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["price", index]).Value = articleToBuy.Price;
-                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["garantie", index]).Value = false;
-                        ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["remise", index]).Value = false;
-
-                        UpdateTotalPrice();
-                        StockUpdateDatabase(articleToUpdate, 0, false);
                     }
                 }
             }
@@ -2165,7 +2324,7 @@ namespace MobileExpress
                                 !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + (dataGridViewTakeOverRepair["type", e.RowIndex].Value as string) :
                                 !string.IsNullOrWhiteSpace(marqueText) && string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + (dataGridViewTakeOverRepair["type", e.RowIndex].Value as string) :
                                 (dataGridViewTakeOverRepair["type", e.RowIndex].Value as string);
-                            GarantiesTemp.Add(new Garantie(tabName: "Réparation", id: id, productName: typeText, months: null, option: null));
+                            GarantiesTemp.Add(new Garantie(tabName: "Réparation", id: id, productName: typeText, months: null, option: false));
                         }
                     }
                 }
@@ -2437,7 +2596,7 @@ namespace MobileExpress
                                 !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + typeText :
                                 !string.IsNullOrWhiteSpace(marqueText) && string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + typeText :
                                 typeText;
-                            GarantiesTemp.Add(new Garantie(tabName: "Déblocage", id: id, productName: productName, months: null, option: null));
+                            GarantiesTemp.Add(new Garantie(tabName: "Déblocage", id: id, productName: productName, months: null, option: false));
                         }
                     }
                 }
@@ -2637,9 +2796,16 @@ namespace MobileExpress
         #region Achat
         private void DataGridViewTakeOverAchat_CurrentCellDirtyStateChanged(object sender, EventArgs e)
         {
-            if (dataGridViewTakeOverAchat.CurrentCell is DataGridViewComboBoxCell)
+            try
             {
-                dataGridViewTakeOverAchat.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                if (dataGridViewTakeOverAchat.IsCurrentCellDirty)
+                {
+                    dataGridViewTakeOverAchat.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
         private void DataGridViewTakeOverAchat_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -2703,7 +2869,7 @@ namespace MobileExpress
                                 !string.IsNullOrWhiteSpace(marqueText) && !string.IsNullOrWhiteSpace(modeleText) ? marqueText + " " + modeleText + " - " + (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string) :
                                 !string.IsNullOrWhiteSpace(marqueText) && string.IsNullOrWhiteSpace(modeleText) ? marqueText + " - " + (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string) :
                                 (dataGridViewTakeOverAchat["article", e.RowIndex].Value as string);
-                            GarantiesTemp.Add(new Garantie(tabName: "Déblocage", id: id, productName: productName, months: null, option: null));
+                            GarantiesTemp.Add(new Garantie(tabName: "Déblocage", id: id, productName: productName, months: null, option: false));
                         }
                     }
                     if (e.ColumnIndex == dataGridViewTakeOverAchat["remise", e.RowIndex].ColumnIndex)
@@ -2770,84 +2936,13 @@ namespace MobileExpress
                 if (0 <= currentRowIndex && currentRowIndex < dataGridViewTakeOverAchat.Rows.Count &&
                     0 <= currentColumnIndex && currentColumnIndex < dataGridViewTakeOverAchat.Columns.Count)
                 {
-                    int id = (dataGridViewTakeOverAchat["id", currentRowIndex].Value as int?).Value;
-                    DataGridViewTextBoxEditingControl textBox = (DataGridViewTextBoxEditingControl)e.Control;
-
-                    if (textBox != null)
+                    // Vérifiez si la colonne en cours d'édition est celle de l'article
+                    if (dataGridViewTakeOverAchat.Columns[currentColumnIndex].Name == "article")
                     {
-                        if (currentColumnIndex == dataGridViewTakeOverAchat["marque", currentRowIndex].ColumnIndex)
-                        {
-                            // Créez et initialisez votre source de données pour l'auto-complétion
-                            AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                            autoCompleteData.AddRange(MarquesDS.Select(x => x.Name).ToArray());
-
-                            // Définissez la source de données de l'auto-complétion pour le TextBox
-                            textBox.AutoCompleteCustomSource = autoCompleteData;
-                            textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
-                            textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
-                        }
-                        if (currentColumnIndex == dataGridViewTakeOverAchat["modele", currentRowIndex].ColumnIndex)
-                        {
-                            // Créez et initialisez votre source de données pour l'auto-complétion
-                            AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-
-                            string marqueName = dataGridViewTakeOverAchat["marque", currentRowIndex].Value as string;
-                            Marque marque = null;
-                            if (!string.IsNullOrWhiteSpace(marqueName))
-                            {
-                                marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
-                                autoCompleteData.AddRange(ModelesDS.Where(x => x.MarqueId == marque.Id).Select(x => x.Name).ToArray());
-                            }
-                            else
-                            {
-                                MessageBox.Show("Aucune marque n'a été saisie. Veuillez en saisir une.", "Alerte", MessageBoxButtons.OK);
-                                return;
-                            }
-
-                            if (autoCompleteData.Count == 0)
-                            {
-                                autoCompleteData.AddRange(ModelesDS.Select(x => x.Name).ToArray());
-                            }
-
-                            // Définissez la source de données de l'auto-complétion pour le TextBox
-                            textBox.AutoCompleteCustomSource = autoCompleteData;
-                            textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
-                            textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
-                        }
-                        if (currentColumnIndex == dataGridViewTakeOverAchat["article", currentRowIndex].ColumnIndex)
-                        {
-                            // Créez et initialisez votre source de données pour l'auto-complétion
-                            AutoCompleteStringCollection autoCompleteData = new AutoCompleteStringCollection();
-                            List<Article> articles = TakeOverTypesDS.Find(x => x.Id == 2).Articles;
-
-                            string marqueName = dataGridViewTakeOverAchat["marque", currentRowIndex].Value as string;
-                            string modeleName = dataGridViewTakeOverAchat["modele", currentRowIndex].Value as string;
-                            string articleName = dataGridViewTakeOverAchat["article", currentRowIndex].Value as string;
-
-                            Marque marque = null;
-                            Modele modele = null;
-
-                            if (!string.IsNullOrWhiteSpace(marqueName) && !string.IsNullOrWhiteSpace(modeleName))
-                            {
-                                marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
-                                modele = ModelesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), modeleName.ToLower()) == 0);
-                                autoCompleteData.AddRange(articles.Where(x => x.MarqueId == marque.Id && x.ModeleId == modele.Id).Select(x => x.Name).ToArray());
-                            }
-                            else if (!string.IsNullOrWhiteSpace(marqueName) && string.IsNullOrWhiteSpace(modeleName))
-                            {
-                                marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
-                                autoCompleteData.AddRange(articles.Where(x => x.MarqueId == marque.Id).Select(x => x.Name).ToArray());
-                            }
-                            else if (string.IsNullOrWhiteSpace(marqueName) && string.IsNullOrWhiteSpace(modeleName))
-                            {
-                                autoCompleteData.AddRange(articles.Select(x => x.Name).ToArray());
-                            }
-
-                            // Définissez la source de données de l'auto-complétion pour le TextBox
-                            textBox.AutoCompleteCustomSource = autoCompleteData;
-                            textBox.AutoCompleteMode = AutoCompleteMode.Suggest;
-                            textBox.AutoCompleteSource = AutoCompleteSource.CustomSource;
-                        }
+                        ComboBox comboBox = e.Control as ComboBox;
+                        comboBox.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                        comboBox.AutoCompleteSource = AutoCompleteSource.ListItems;
+                        comboBox.DropDownStyle = ComboBoxStyle.DropDown;
                     }
                 }
             }
@@ -2874,162 +2969,57 @@ namespace MobileExpress
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
-        private void DataGridViewTakeOverAchat_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        private void DataGridViewTakeOverAchat_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            try
+            if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverAchat.Rows.Count &&
+                0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverAchat.Columns.Count)
             {
-                if (0 <= e.RowIndex && e.RowIndex < dataGridViewTakeOverAchat.Rows.Count &&
-                    0 <= e.ColumnIndex && e.ColumnIndex < dataGridViewTakeOverAchat.Columns.Count &&
-                    !dataGridViewTakeOverAchat.Rows[e.RowIndex].IsNewRow &&
-                    (dataGridViewTakeOverAchat["id", e.RowIndex].Value as int?).HasValue)
+                if (e.ColumnIndex == dataGridViewTakeOverAchat.Columns["article"].Index && e.RowIndex >= 0)
                 {
-                    int id = (dataGridViewTakeOverAchat["id", e.RowIndex].Value as int?).Value;
-
-                    if (e.ColumnIndex == dataGridViewTakeOverAchat["price", e.ColumnIndex].RowIndex)
+                    string selectedArticleName = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["article"].Value as string);
+                    if (!string.IsNullOrWhiteSpace(selectedArticleName))
                     {
-                        UpdateTotalPrice();
-                    }
-                    if (e.ColumnIndex == dataGridViewTakeOverAchat["marque", e.ColumnIndex].RowIndex)
-                    {
-                        string marqueName = dataGridViewTakeOverAchat["marque", e.RowIndex].Value as string;
-                        if (!string.IsNullOrWhiteSpace(marqueName))
+                        Article selectedArticle = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(a => a.DisplayText == selectedArticleName);
+
+                        if (selectedArticle != null)
                         {
-                            Marque marque = MarquesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
-                            if (marque == null)
-                            {
-                                marque = new Marque(MarquesDS.OrderByDescending(x => x.Id).First().Id + 1, char.ToUpper(marqueName[0]) + marqueName.Substring(1));
-                                DialogResult result = MessageBox.Show($"La marque \"{marqueName}\" n'est pas connue du système. Voulez-vous l'ajouter ?", "Information", MessageBoxButtons.YesNo);
-                                if (result == DialogResult.Yes)
-                                {
-                                    MarquesDS.Add(marque);
-                                    Tools.WriteLineTofile($"{marque.Id};{marque.Name}", Paths.MarquesDSPath, true);
-                                }
-                            }
-                        }
-                    }
-                    if (e.ColumnIndex == dataGridViewTakeOverAchat["modele", e.ColumnIndex].RowIndex)
-                    {
-                        string modeleName = dataGridViewTakeOverAchat["modele", e.RowIndex].Value as string;
-                        if (!string.IsNullOrWhiteSpace(modeleName))
-                        {
-                            Modele modele = ModelesDS.FirstOrDefault(x => string.Compare(x.Name.ToLower(), modeleName.ToLower()) == 0);
-                            if (modele == null)
-                            {
-                                string marqueName = dataGridViewTakeOverAchat["marque", e.RowIndex].Value as string;
-                                Marque marque = null;
-                                if (!string.IsNullOrWhiteSpace(marqueName))
-                                {
-                                    marque = MarquesDS.First(x => string.Compare(x.Name.ToLower(), marqueName.ToLower()) == 0);
-                                }
-                                else
-                                {
-                                    MessageBox.Show("Pour ajouter un nouveau modèle, assurez-vous d'avoir sélectionné une marque.", "Alerte");
-                                    return;
-                                }
+                            dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["id"].Value = selectedArticle.Id;
+                            dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["quantity"].Value = 1;
+                            dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["price"].Value = selectedArticle.Price;
 
-                                modele = new Modele(ModelesDS.OrderByDescending(x => x.Id).First().Id + 1, marque.Id, char.ToUpper(modeleName[0]) + modeleName.Substring(1));
-                                DialogResult result = MessageBox.Show($"Le modele \"{modeleName}\" n'est pas connue du système. Voulez-vous l'ajouter ?", "Information", MessageBoxButtons.YesNo);
-                                if (result == DialogResult.Yes)
-                                {
-                                    ModelesDS.Add(modele);
-                                    Tools.WriteLineTofile($"{modele.Id};{modele.MarqueId};{modele.Name}", Paths.ModelesDSPath, true);
-                                }
-                            }
-                        }
-                    }
-                    if (e.ColumnIndex == dataGridViewTakeOverAchat["article", e.ColumnIndex].RowIndex)
-                    {
-                        string articleName = dataGridViewTakeOverAchat["article", e.RowIndex].Value as string;
-
-                        Article article = null;
-                        if (!string.IsNullOrWhiteSpace(articleName))
-                        {
-                            article = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(x => string.Compare(x.Name.ToLower(), articleName.ToLower()) == 0);
-                        }
-                        if (article == null)
-                        {
-                            using (ArticleForm dialog = new ArticleForm(StockAction.Achat, null, TakeOverTypesDS.First(x => x.Id == 2).Articles, MarquesDS, ModelesDS))
-                            {
-                                // Afficher la boîte de dialogue modale
-                                if (dialog.ShowDialog() == DialogResult.OK)
-                                {
-                                    (StockAction action, Article articleToBuy, List<Article> articles, List<Marque> marques, List<Modele> modeles) = dialog.GetResult();
-                                    TakeOverTypesDS.First(x => x.Id == 2).Articles = articles;
-                                    MarquesDS = marques;
-                                    ModelesDS = modeles;
-                                    if (action == StockAction.AchatAjout)
-                                    {
-                                        int oldQuantity = articleToBuy.Quantity;
-                                        articleToBuy.Quantity = 99;
-                                        StockUpdateDatabase(articleToBuy, -1);
-                                        articleToBuy.Quantity = oldQuantity;
-                                    }
-                                    Article articleToUpdate = TakeOverTypesDS.First(x => x.Id == 2).Articles.First(y => y.Id == articleToBuy.Id);
-                                    articleToUpdate.Quantity -= articleToBuy.Quantity;
-
-                                    dataGridViewTakeOverAchat.Rows.Add();
-
-                                    // récupérer le dernier row index vide
-                                    int index = 0;
-                                    foreach (DataGridViewRow row in dataGridViewTakeOverAchat.Rows)
-                                    {
-                                        if (row.IsNewRow || !(row.Cells["id"].Value as int?).HasValue)
-                                            break;
-                                        index++;
-                                    }
-
-                                    // remplir dataGridViewTakeOverAchat.Rows[dernierRowIndexVide]
-                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["id", index]).Value = id;
-                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = id.ToString();
-
-                                    Marque marque = null;
-                                    if (articleToBuy.MarqueId.HasValue)
-                                    {
-                                        marque = MarquesDS.First(x => x.Id == articleToBuy.MarqueId.Value);
-                                    }
-                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["marque", index]).Value = marque?.Name ?? string.Empty;
-                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = marque?.Name ?? string.Empty;
-
-                                    Modele modele = null;
-                                    if (articleToBuy.ModeleId.HasValue)
-                                    {
-                                        modele = ModelesDS.First(x => x.Id == articleToBuy.ModeleId.Value);
-                                    }
-                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["modele", index]).Value = modele?.Name ?? string.Empty;
-                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = modele?.Name ?? string.Empty;
-
-                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["article", index]).Value = articleToBuy.Name;
-                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = articleToBuy.Name;
-
-                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["quantity", index]).Value = articleToBuy.Quantity;
-                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = articleToBuy.Quantity.ToString();
-
-                                    ((DataGridViewTextBoxCell)dataGridViewTakeOverAchat["price", index]).Value = articleToBuy.Price;
-                                    ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = articleToBuy.Price.ToString();
-
-                                    ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["garantie", index]).Value = false;
-
-                                    ((DataGridViewCheckBoxCell)dataGridViewTakeOverAchat["remise", index]).Value = false;
-
-                                    UpdateTotalPrice();
-                                    StockUpdateDatabase(articleToUpdate, 0, false);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            dataGridViewTakeOverAchat["price", e.RowIndex].Value = article.Price;
-                            ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = article.Price.ToString();
-                            dataGridViewTakeOverAchat["quantity", e.RowIndex].Value = 1;
-                            ((DataGridViewTextBoxEditingControl)dataGridViewTakeOverAchat.EditingControl).Text = "1";
                             UpdateTotalPrice();
+
+                            dataGridViewTakeOverAchat.EndEdit();
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
+                else if (e.ColumnIndex == dataGridViewTakeOverAchat.Columns["quantity"].Index && e.RowIndex >= 0)
+                {
+                    int quantity = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["quantity"].Value as int?) ?? 0;
+                    if (quantity == 0)
+                    {
+                        dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["id"].Value = null;
+                        dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["article"].Value = null;
+                        dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["quantity"].Value = null;
+                        dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["price"].Value = null;
+                        return;
+                    }
+                    string selectedArticleName = (dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["article"].Value as string);
+                    if (!string.IsNullOrWhiteSpace(selectedArticleName))
+                    {
+                        Article selectedArticle = TakeOverTypesDS.First(x => x.Id == 2).Articles.FirstOrDefault(a => a.DisplayText == selectedArticleName);
+                        if (selectedArticle != null)
+                        {
+                            dataGridViewTakeOverAchat.Rows[e.RowIndex].Cells["price"].Value = selectedArticle.Price;
+                            UpdateTotalPrice();
+                            dataGridViewTakeOverAchat.EndEdit();
+                        }
+                    }
+                }
+                else if (e.ColumnIndex == dataGridViewTakeOverAchat.Columns["price"].Index && e.RowIndex >= 0)
+                {
+                    UpdateTotalPrice();
+                }
             }
         }
         #endregion
@@ -3291,9 +3281,26 @@ namespace MobileExpress
 
             List<Article> articles = TakeOverTypesDS.Find(x => x.Id == 2).Articles
                 .Where(x =>
-                    x.Name.ToUpper().Contains(searchText))
-                .Distinct()
-                .ToList();
+                {
+                    bool likeProductName = x.Produit.ToLowerInvariant().Contains(searchText.ToLowerInvariant());
+                    if (likeProductName)
+                        return true;
+
+                    bool likeCodeReference = x.CodeReference.ToLowerInvariant().Contains(searchText.ToLowerInvariant());
+                    if (likeCodeReference)
+                        return true;
+
+                    string marqueName = MarquesDS.FirstOrDefault(m => m.Id == x.MarqueId)?.Name ?? string.Empty;
+                    bool likeMarque = marqueName.ToLowerInvariant().Contains(searchText.ToLowerInvariant());
+                    if (likeMarque)
+                        return true;
+                    
+                    string modeleName = ModelesDS.FirstOrDefault(m => m.Id == x.ModeleId)?.Name ?? string.Empty;
+                    bool likeModele = modeleName.ToLowerInvariant().Contains(searchText.ToLowerInvariant());
+                    if (likeModele)
+                        return true;
+                    return false;
+                }).Distinct().ToList();
 
             return articles;
         }
@@ -3354,16 +3361,25 @@ namespace MobileExpress
                 {
                     Article articleToUpdate = TakeOverTypesDS.First(x => x.Id == 2).Articles.First(x => x.Id == id.Value);
 
-                    using (ArticleForm dialog = new ArticleForm(StockAction.MiseAJour, articleToUpdate, TakeOverTypesDS.First(x => x.Id == 2).Articles, MarquesDS, ModelesDS))
+                    using (ArticleForm dialog = new ArticleForm(
+                        StockAction.MiseAJour
+                        , TakeOverTypesDS.First(x => x.Id == 2).Articles
+                        , MarquesDS
+                        , ModelesDS
+                        , null
+                        , articleToUpdate))
                     {
                         // Afficher la boîte de dialogue modale
                         if (dialog != null && dialog.ShowDialog() == DialogResult.OK)
                         {
                             (StockAction action, Article article, List<Article> articles, List<Marque> marques, List<Modele> modeles) = dialog.GetResult();
-                            TakeOverTypesDS.First(x => x.Id == 2).Articles = articles;
-                            MarquesDS = marques;
-                            ModelesDS = modeles;
-                            StockUpdateDatabase(article, action == StockAction.Suppression ? -2 : 0);
+                            TakeOverTypesDS.First(x => x.Id == 2).Articles.Clear();
+                            TakeOverTypesDS.First(x => x.Id == 2).Articles.AddRange(articles);
+                            MarquesDS.Clear();
+                            MarquesDS.AddRange(marques);
+                            ModelesDS.Clear();
+                            ModelesDS.AddRange(modeles);
+                            StockUpdateDatabase(article, action);
                         }
                     }
                 }
@@ -3377,16 +3393,23 @@ namespace MobileExpress
         {
             try
             {
-                using (ArticleForm dialog = new ArticleForm(StockAction.Ajout, null, TakeOverTypesDS.First(x => x.Id == 2).Articles, MarquesDS, ModelesDS))
+                using (ArticleForm dialog = new ArticleForm(
+                    StockAction.Ajout
+                    , TakeOverTypesDS.First(x => x.Id == 2).Articles
+                    , MarquesDS
+                    , ModelesDS))
                 {
                     // Afficher la boîte de dialogue modale
                     if (dialog.ShowDialog() == DialogResult.OK)
                     {
                         (StockAction action, Article articleToAdd, List<Article> articles, List<Marque> marques, List<Modele> modeles) = dialog.GetResult();
-                        TakeOverTypesDS.First(x => x.Id == 2).Articles = articles;
-                        MarquesDS = marques;
-                        ModelesDS = modeles;
-                        StockUpdateDatabase(articleToAdd, -1);
+                        TakeOverTypesDS.First(x => x.Id == 2).Articles.Clear();
+                        TakeOverTypesDS.First(x => x.Id == 2).Articles.AddRange(articles);
+                        MarquesDS.Clear();
+                        MarquesDS.AddRange(marques);
+                        ModelesDS.Clear();
+                        ModelesDS.AddRange(modeles);
+                        StockUpdateDatabase(articleToAdd, StockAction.Ajout);
                     }
                 }
             }
@@ -3395,7 +3418,7 @@ namespace MobileExpress
                 MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK);
             }
         }
-        private void StockUpdateDatabase(Article article, int index, bool haveToRefresh = true)
+        private void StockUpdateDatabase(Article article, StockAction action, bool haveToRefresh = true)
         {
             string path = Paths.StockDSPath;
 
@@ -3407,23 +3430,20 @@ namespace MobileExpress
                 List<string> data = new List<string>();
 
                 // Ajout
-                if (index == -1)
+                if (action == StockAction.Ajout)
                 {
                     Tools.WriteLineTofile(
                         $"{article.Id};" +
                         $"{(article.MarqueId.HasValue ? article.MarqueId.Value.ToString() : string.Empty)};" +
                         $"{(article.ModeleId.HasValue ? article.ModeleId.Value.ToString() : string.Empty)};" +
-                        $"{article.Name};" +
+                        $"{article.Produit};" +
                         $"{article.Price};" +
                         $"{article.Quantity};" +
-                        $"{article.UPC};" +
-                        $"{article.EAN};" +
-                        $"{article.GTIN};" +
-                        $"{article.ISBN}", path, true);
-                    MessageBox.Show($"L'article {article.Name} a été sauvegardée.");
+                        $"{article.CodeReference}", path, true);
+                    MessageBox.Show($"L'article {article.Produit} a été sauvegardée.");
                 }
                 // Suppression
-                else if (index == -2)
+                else if (action == StockAction.Suppression)
                 {
                     data = Tools.GetDataFromFile(path);
                     int lineIndex = 0;
@@ -3434,14 +3454,14 @@ namespace MobileExpress
                         {
                             data.RemoveAt(lineIndex);
                             TakeOverTypesDS.Find(x => x.Id == 2).Articles.Remove(article);
-                            MessageBox.Show($"L'article \"{article.Name}\" a été supprimé.");
+                            MessageBox.Show($"L'article \"{article.Produit}\" a été supprimé.");
                         }
                         lineIndex++;
                     }
                     Tools.RewriteDataToFile(data, path, false);
                 }
                 // Modification
-                else if (index >= 0)
+                else if (action == StockAction.MiseAJour)
                 {
                     data = Tools.GetDataFromFile(path);
                     for (int i = 0; i < data.Count; i++)
@@ -3453,15 +3473,12 @@ namespace MobileExpress
                                 $"{article.Id};" +
                                 $"{(article.MarqueId.HasValue ? article.MarqueId.Value.ToString() : string.Empty)};" +
                                 $"{(article.ModeleId.HasValue ? article.ModeleId.Value.ToString() : string.Empty)};" +
-                                $"{article.Name};" +
+                                $"{article.Produit};" +
                                 $"{article.Price};" +
                                 $"{article.Quantity};" +
-                                $"{article.UPC};" +
-                                $"{article.EAN};" +
-                                $"{article.GTIN};" +
-                                $"{article.ISBN}";
-                            TakeOverTypesDS.Find(x => x.Id == 2).Articles[i] = article;
-                            MessageBox.Show($"Les modifications de l'article {article.Name} ont été sauvegardées.");
+                                $"{article.CodeReference}";
+                            TakeOverTypesDS.Find(x => x.Id == 2).Articles[i - 1] = article;
+                            MessageBox.Show($"Les modifications de l'article {article.Produit} ont été sauvegardées.");
                         }
                     }
                     Tools.RewriteDataToFile(data, path, false);

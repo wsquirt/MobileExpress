@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.IO;
 using System.Text;
+using System.Data;
 
 namespace MobileExpress
 {
@@ -217,6 +218,32 @@ namespace MobileExpress
                 espece ? PaymentMode.ESP :
                 virement ? PaymentMode.VIR :
                 PaymentMode.NONE;
+        }
+        public static object GetValueFromDataTable(DataTable dataTable, int rowIndex, string columnName)
+        {
+            // Vérifiez si l'index de ligne est valide
+            if (rowIndex >= 0 && rowIndex < dataTable.Rows.Count)
+            {
+                // Obtenez la ligne spécifique
+                DataRow row = dataTable.Rows[rowIndex];
+
+                // Vérifiez si le nom de la colonne est valide
+                if (dataTable.Columns.Contains(columnName))
+                {
+                    // Obtenez la valeur de la colonne spécifiée dans la ligne
+                    return row[columnName];
+                }
+                else
+                {
+                    // La colonne spécifiée n'existe pas dans le DataTable
+                    return null;
+                }
+            }
+            else
+            {
+                // L'index de ligne spécifié est invalide
+                return null;
+            }
         }
     }
 }

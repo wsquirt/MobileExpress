@@ -60,10 +60,19 @@ namespace MobileExpress
 
                 if (Customers.Any(x =>
                 {
-                    bool isExistedCustomer =
-                        x.PhoneNumber.Contains(Phone) ||
-                        (x.LastName.ToLowerInvariant().Contains(Lastname.ToLowerInvariant()) && x.FirstName.ToLowerInvariant().Contains(Firstname.ToLowerInvariant())) ||
-                        x.LastName.ToLowerInvariant().Contains(Lastname.ToLowerInvariant()) || x.FirstName.ToLowerInvariant().Contains(Firstname.ToLowerInvariant());
+                    bool isExistedCustomer = false;
+                    if (!string.IsNullOrWhiteSpace(Phone))
+                    {
+                        isExistedCustomer = string.Compare(x.PhoneNumber, Phone) == 0;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(Lastname.ToLowerInvariant()))
+                    {
+                        isExistedCustomer = string.Compare(x.LastName.ToLowerInvariant(), Lastname.ToLowerInvariant()) == 0;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(Firstname.ToLowerInvariant()))
+                    {
+                        isExistedCustomer = string.Compare(x.FirstName.ToLowerInvariant(), Firstname.ToLowerInvariant()) == 0;
+                    }
                     return isExistedCustomer;
                 }))
                 {
