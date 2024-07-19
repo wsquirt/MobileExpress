@@ -1,7 +1,48 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
-  <Settings />
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MobileExpress.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="PortScanner" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">COM7</Value>
+    </Setting>
+    <Setting Name="TemplateFacturePath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Configuration\Template facture.docx</Value>
+    </Setting>
+    <Setting Name="TemplateRecuPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Configuration\Template prise en charge.docx</Value>
+    </Setting>
+    <Setting Name="LogoPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Configuration\Logoeducdombleu.png</Value>
+    </Setting>
+    <Setting Name="MarquesDSPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Configuration\Marques.csv</Value>
+    </Setting>
+    <Setting Name="ModelesDSPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Configuration\Modèles.csv</Value>
+    </Setting>
+    <Setting Name="UnlockTypesDSPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Configuration\Types de déblocage.csv</Value>
+    </Setting>
+    <Setting Name="RepairTypesDSPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Configuration\Types de réparation.csv</Value>
+    </Setting>
+    <Setting Name="PaymentModesDSPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Configuration\Modes de paiement.csv</Value>
+    </Setting>
+    <Setting Name="ReceiptDSPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Ticket de caisse.csv</Value>
+    </Setting>
+    <Setting Name="CustomersDSPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Client.csv</Value>
+    </Setting>
+    <Setting Name="StockDSPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Article.csv</Value>
+    </Setting>
+    <Setting Name="PriseEnChargeDirectory" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Prises en charges\</Value>
+    </Setting>
+    <Setting Name="FactureDirectory" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\merto\Source\MobileExpressApp\Factures\</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>
