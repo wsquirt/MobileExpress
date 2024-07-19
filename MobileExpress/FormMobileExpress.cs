@@ -2180,7 +2180,7 @@ namespace MobileExpress
                 MEData newTakeOver = new MEData(
                     takeOverId, date, null, takeOverCustomer.Id, marque?.Id,
                     modele?.Id, null, repairType?.Id, unlockType?.Id, article?.Id,
-                    article.DisplayText, quantity, price, garantie?.Months, null,
+                    article?.DisplayText, quantity, price, garantie?.Months, null,
                     accompte, resteDu, paid, total, paymentMode,
                     TakeOverState.InProgress, id, false, garantie?.Option ?? false);
 

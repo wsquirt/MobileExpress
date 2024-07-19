@@ -28,8 +28,8 @@ namespace MobileExpress
     public static class Services
     {
         #region Document Word
-        public static string TemplateFacturePath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Configuration\Template facture.docx";
-        public static string TemplateRecuPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Configuration\Template prise en charge.docx";
+        public static string TemplateFacturePath = Properties.Settings.Default.TemplateFacturePath;
+        public static string TemplateRecuPath = Properties.Settings.Default.TemplateRecuPath;
         public static void GenerateDocx(
             int type,
             string logo,
@@ -82,7 +82,33 @@ namespace MobileExpress
                         continue;
                     }
 
-                    string panne = type == 0 ? (mEData.RepairTypeId.HasValue ? repairTypeNames[mEData.RepairTypeId.Value] : unlockTypeNames[mEData.UnlockTypeId.Value]) : articles[mEData.ArticleId.Value];
+                    string panne = null;
+                    if (type == 0)
+                    {
+                        if (mEData.RepairTypeId.HasValue)
+                        {
+                            panne = repairTypeNames[mEData.RepairTypeId.Value];
+                        }
+                        else
+                        {
+                            panne = unlockTypeNames[mEData.UnlockTypeId.Value];
+                        }
+                    }
+                    else if (type == 1)
+                    {
+                        if (mEData.RepairTypeId.HasValue)
+                        {
+                            panne = repairTypeNames[mEData.RepairTypeId.Value];
+                        }
+                        else if (mEData.UnlockTypeId.HasValue)
+                        {
+                            panne = unlockTypeNames[mEData.UnlockTypeId.Value];
+                        }
+                        else
+                        {
+                            panne = articles[mEData.ArticleId.Value];
+                        }
+                    }
                     string marquename = mEData.MarqueId.HasValue ? marques[mEData.MarqueId.Value] : string.Empty;
                     string modelename = mEData.ModeleId.HasValue ? modeles[mEData.ModeleId.Value] : string.Empty;
                     string imei = mEData.IMEI;
@@ -538,7 +564,7 @@ namespace MobileExpress
             {
                 CloseScanner();
 
-                CurrentPort.PortName = "COM3";
+                CurrentPort.PortName = Properties.Settings.Default.PortScanner;
                 CurrentPort.BaudRate = 19200;
                 CurrentPort.ReadTimeout = 1000;
                 CurrentPort.Parity = Parity.None;
@@ -596,7 +622,7 @@ namespace MobileExpress
             }
             catch (UnauthorizedAccessException ex)
             {
-                if (string.Compare(ex.Message, "L'accès au port 'COM3' est refusé.") == 0)
+                if (string.Compare(ex.Message, "L'accès au port 'COM7' est refusé.") == 0)
                     return;
                 MessageBox.Show("L'accès au scanner est refusé.", "Alerte", MessageBoxButtons.OK);
             }
@@ -604,7 +630,7 @@ namespace MobileExpress
             {
                 if (string.Compare(ex.Message, "L'opération d'entrée/sortie a été abandonnée en raison de l'arrêt d’un thread ou à la demande d'une application.\r\n") == 0)
                     return;
-                MessageBox.Show("Le scanner est en cours de démarrage.", "Alerte", MessageBoxButtons.OK);
+                //MessageBox.Show("Le scanner est en cours de démarrage.", "Alerte", MessageBoxButtons.OK);
             }
             catch (InvalidOperationException)
             {
@@ -612,7 +638,7 @@ namespace MobileExpress
             }
             catch (Exception ex)
             {
-                if (string.Compare(ex.Message, "Le port 'COM3' n'existe pas.") == 0)
+                if (string.Compare(ex.Message, "Le port 'COM7' n'existe pas.") == 0)
                     return;
                 if (string.Compare(ex.Message, "Le délai d'attente de l'opération a expiré.") == 0)
                     return;

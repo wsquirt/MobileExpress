@@ -9,20 +9,20 @@ namespace MobileExpress
 {
     public static class Paths
     {
-        public static string LogoPath = @"C:\Users\merto\OneDrive\Documents\Nicepage\Site_26231059\images\Logoeducdombleu.png";
+        public static string LogoPath = Properties.Settings.Default.LogoPath;
 
-        public static string MarquesDSPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Configuration\Marques.csv";
-        public static string ModelesDSPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Configuration\Modèles.csv";
-        public static string UnlockTypesDSPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Configuration\Types de déblocage.csv";
-        public static string RepairTypesDSPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Configuration\Types de réparation.csv";
-        public static string PaymentModesDSPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Configuration\Modes de paiement.csv";
+        public static string MarquesDSPath = Properties.Settings.Default.MarquesDSPath;
+        public static string ModelesDSPath = Properties.Settings.Default.ModelesDSPath;
+        public static string UnlockTypesDSPath = Properties.Settings.Default.UnlockTypesDSPath;
+        public static string RepairTypesDSPath = Properties.Settings.Default.RepairTypesDSPath;
+        public static string PaymentModesDSPath = Properties.Settings.Default.PaymentModesDSPath;
 
-        public static string ReceiptDSPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Ticket de caisse.csv";
-        public static string CustomersDSPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Client.csv";
-        public static string StockDSPath = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Article.csv";
+        public static string ReceiptDSPath = Properties.Settings.Default.ReceiptDSPath;
+        public static string CustomersDSPath = Properties.Settings.Default.CustomersDSPath;
+        public static string StockDSPath = Properties.Settings.Default.StockDSPath;
 
-        public static string PriseEnChargeDirectory = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Prises en charges\";
-        public static string FactureDirectory = @"C:\Users\merto\OneDrive\Documents\MobileExpressApp\Factures\";
+        public static string PriseEnChargeDirectory = Properties.Settings.Default.PriseEnChargeDirectory;
+        public static string FactureDirectory = Properties.Settings.Default.FactureDirectory;
     }
     public class DocxData
     {
